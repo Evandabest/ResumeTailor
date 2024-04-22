@@ -15,13 +15,30 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-const handlePurchase = (amount: number, price: number) => {
-  // TODO: Implement purchase logic
-  console.log(`Purchasing ${amount} tokens for $${price}`);
-};
+import { CheckoutDialog } from "@/components/checkout-dialog";
 
 export default function PricingPage() {
+  const [checkoutData, setCheckoutData] = useState<{
+    isOpen: boolean;
+    tokenAmount: number;
+    price: number;
+    packageName: string;
+  }>({
+    isOpen: false,
+    tokenAmount: 0,
+    price: 0,
+    packageName: "",
+  });
+
+  const handlePurchase = (amount: number, price: number, packageName: string) => {
+    setCheckoutData({
+      isOpen: true,
+      tokenAmount: amount,
+      price,
+      packageName,
+    });
+  };
+
   return (
     <div className="container mx-auto py-12 px-4 md:py-16">
       <div className="text-center max-w-3xl mx-auto mb-12">
@@ -55,7 +72,7 @@ export default function PricingPage() {
           <CardContent className="pt-4">
             <Button 
               className="w-full transform transition-transform hover:scale-105 hover:shadow-lg cursor-pointer"
-              onClick={() => handlePurchase(50, 5)}
+              onClick={() => handlePurchase(50, 5, "Starter")}
             >
               Purchase Tokens
             </Button>
@@ -83,7 +100,7 @@ export default function PricingPage() {
           <CardContent className="pt-4">
             <Button 
               className="w-full bg-blue-700 hover:bg-blue-800 transform transition-transform hover:scale-105 hover:shadow-lg cursor-pointer"
-              onClick={() => handlePurchase(120, 10)}
+              onClick={() => handlePurchase(120, 10, "Value")}
             >
               Purchase Tokens
             </Button>
@@ -108,7 +125,7 @@ export default function PricingPage() {
           <CardContent className="pt-4">
             <Button 
               className="w-full transform transition-transform hover:scale-105 hover:shadow-lg cursor-pointer"
-              onClick={() => handlePurchase(240, 20)}
+              onClick={() => handlePurchase(240, 20, "Bulk")}
             >
               Purchase Tokens
             </Button>
@@ -145,6 +162,14 @@ export default function PricingPage() {
           />
         </div>
       </div>
+
+      <CheckoutDialog
+        isOpen={checkoutData.isOpen}
+        onClose={() => setCheckoutData(prev => ({ ...prev, isOpen: false }))}
+        tokenAmount={checkoutData.tokenAmount}
+        price={checkoutData.price}
+        packageName={checkoutData.packageName}
+      />
     </div>
   );
 }
