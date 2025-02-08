@@ -1,16 +1,105 @@
-# Topics in Software Engineering
+# ResumeTailor
 
-This is a template repository for the topics in software engineering class I teach at CCNY.
-It comes with a pre-configured devcontainer that includes most of the tools you'll need during this semester. 
-If you start with this repository as a template you will have a ready to go development environment that you'll be able to 
-share with your team mates. Additionally, a demo github action workflow has been setup to help you with your first assignment.
+Transform your job search with intelligent resume customization. ResumeTailor automatically analyzes job descriptions and tailors your resume to highlight the most relevant experience and projects, significantly increasing your chances of landing interviews.
 
-# Tools
-The tools that are installed with this devcontainer are:
+## Why ResumeTailor?
 
-* act which allows you to run GitHub Actions in the local development environment.
-* terraform which lets you automate infrastructure provisioning
-* aws cli for interacting with AWS environment.
+In today's competitive job market, generic resumes simply don't cut it. Studies show that tailored resumes are 3x more likely to result in an interview, but manually customizing your resume for each application is time-consuming and tedious.
 
-# For Students
-If you are a student in the class you can create a new repository using this template. Once you've created a repository of your own replace the content of this file with the description or you project idea.
+ResumeTailor solves this by:
+- Automatically extracting key requirements and skills from job listings
+- Intelligently selecting relevant projects from your GitHub portfolio
+- Generating optimized resumes that match what recruiters are looking for
+- Saving you hours of manual resume editing time
+
+## Features
+
+### Smart Job Analysis
+- Automated web scraping of job listings to identify key requirements
+- Intelligent keyword extraction and skill mapping
+- Real-time analysis of job posting requirements
+
+### GitHub Integration
+- Seamless connection to your GitHub repositories
+- Smart project selection based on job requirements
+- Automatic extraction of relevant technical skills and achievements
+- Dynamic project highlighting based on role requirements
+
+### Resume Generation
+- Custom-tailored resumes for each application
+- Intelligent content prioritization
+- Professional formatting and layout
+- Export to multiple formats (PDF, DOCX)
+
+## Technical Stack
+
+### Frontend
+- Next.js for server-side rendering and routing
+- React for component-based UI
+- TypeScript for type safety
+- Tailwind CSS for styling
+- Responsive design for all devices
+
+### Backend
+- Flask for RESTful API development
+- Python for data processing and analysis
+- PostgreSQL for data persistence
+- RESTful API architecture
+
+### Deployment
+- Vercel for frontend and backend deployment
+- Automated CI/CD pipeline
+- SSL encryption for security
+
+## Getting Started
+
+### Prerequisites
+- Node.js 16+
+- Python 3.8+
+- PostgreSQL 13+
+- GitHub account for integration
+
+### Installation
+```bash
+# Clone the repository
+git clone https://github.com/Evandabest/topics-in-software-engineering
+
+# Install frontend dependencies
+cd frontend
+npm install
+
+# Install backend dependencies
+cd ../backend
+pip install -r requirements.txt
+
+# Set up environment variables
+cp .env.example .env
+```
+
+## Pricing
+
+### Free Tier
+- 3 resume customizations per month
+- Basic GitHub integration
+- Standard export formats
+
+### Premium Tier ($9.99/month)
+- Unlimited resume customizations
+- Advanced GitHub integration
+- Priority support
+- Additional export formats
+- Resume performance analytics
+
+## Contributing
+
+We welcome contributions! Please read our [Contributing Guide](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Contact
+
+- Website: TBD
+- Email: TBD
+- Twitter: TBD
