@@ -1,0 +1,15 @@
+[project]
+name = "resume-tailor"
+version = "0.1.0"
+description = "Default template for PDM package"
+authors = [
+    {name = "DUOLabs333", email = "dvdugo333@gmail.com"},
+]
+dependencies = ["supabase>=2.13.0", "flask>=3.1.0"]
+requires-python = "==3.11.*"
+readme = "README.md"
+license = {text = "MIT"}
+
+
+[tool.pdm]
+distribution = false
