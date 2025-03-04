@@ -2,17 +2,17 @@ from utils import *
 
 @endpoint("/signup", ["email", "password"])
 def signup():
-    user=auth.sign_up({"email": email, "password": password})
+    user=client.auth.sign_up({"email": email, "password": password})
     if user["error"]!="":
         error=user["error"]
     else:
-        response=table("users").insert({"id": user["id"]}).execute()
+        response=client.table("users").insert({"id": user["id"]}).execute()
         if (response["error"]!=""):
             error=response["error"]
 
 @endpoint("/login", ["email", "password"], ["token"])
 def login():
-    user=supabase.auth.sign_up({"email": email, "password": password})
+    user=client.auth.sign_up({"email": email, "password": password})
     error=user["error"]
 
     token=user["access_token"]
@@ -26,7 +26,7 @@ def modify():
         update_dict["email"]=email
     if password is not None:
         update_dict["password"]=password
-    response=auth.update_user(update_dict)
+    response=client.auth.update_user(update_dict)
 
     error=response["error"] #TODO: Add code to endpoint to not send error if empty
 
@@ -35,7 +35,7 @@ def modify():
 
 @endpoint("/delete", [])
 def delete():
-   auth.admin.delete_user(auth.get_user(token)["user"]["id"])
+   client.auth.admin.delete_user(auth.get_user(token)["user"]["id"])
 
 
 
