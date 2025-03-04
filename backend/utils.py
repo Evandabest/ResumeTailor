@@ -18,13 +18,14 @@ class PersistentLocals(object):
 
     def __call__(self, *args, **kwargs): #https://code.activestate.com/recipes/577283-decorator-to-expose-local-variables-of-a-function-/
         def tracer(frame, event, arg):
-            if event=='return':
+            if event=='return': #TODO: Make sure that this also fires when an exceptions bubbles up
                 self._locals = frame.f_locals.copy()
 
             elif event=="call":
                 if(frame.f_code==self.func.__code__):
                     frame.f_locals.update(self.locals_dict)
-
+                    frame.f_globals.update(self.locals_dict)
+                    
         # tracer is activated on next call, return or exception
         sys.setprofile(tracer)
         try:
@@ -43,11 +44,11 @@ class PersistentLocals(object):
     def locals(self):
         return self._locals
 
-def endpoint(endpoint, arguments, results=None):
+def endpoint(endpoint, parameters, outputs=None):
     """
     Injects the keys specified in `arguments` from the request JSON as local variables in the decorated function. The inclusion of `token` is implied.
 
-    Returns all of the locals whose names was specified by `results` in a single response JSON. The inclusion of `error` is implied.
+    Returns all of the locals whose names was specified by `results` in a single response JSON. The inclusion of both `error` and `message` are implied.
 
     This forces better self-documentation by not allowing the caller to use or return variables without specifying them ahead of time
     """
@@ -56,18 +57,25 @@ def endpoint(endpoint, arguments, results=None):
         @app.route(endpoint, methods=["POST"])
         @functools.wraps(f)
         def wrapper(*args, **kwargs):
-            nonlocal arguments, results
-            
-            arguments.append("token")
-            arguments = { k: request.json.get(k, None) for k in arguments}
-            
-            if results is None:
-                results=[]
-            results.append("error")
-            persistent_locals=PersistentLocals(f, arguments)
-            persistent_locals(*args, **kwargs)
+            parameters_=parameters.copy()
 
-            return {k: persistent_locals.locals[k] for k in results if k in persistent_locals}
+            parameters_.append("token")
+            parameters_ = { k: request.json.get(k, None) for k in parameters_}
+            
+            if outputs is None:
+                outputs_=[]
+            else:
+                outputs_=outputs.copy()
+            outputs_.extend(["error", "message"])
+            persistent_locals=PersistentLocals(f, parameters_)
+            try:
+                status=persistent_locals(*args, **kwargs)
+            except Exception as e:
+                persistent_locals.locals["error"]=e.__class__.__name__
+                persistent_locals.locals["message"]=str(e)
+                status=500
+
+            return {k: persistent_locals.locals[k] for k in outputs_ if k in persistent_locals.locals}, (200 if status is None else status)
             
         return wrapper
     return decorator
