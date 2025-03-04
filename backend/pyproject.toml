@@ -16,3 +16,8 @@ distribution = false
 
 [tool.pyright]
 extraPaths = ["__pypackages__/3.11/lib/"]
+
+[tool.pytest.ini_options]
+addopts = "--ignore=__pypackages__"
+testpaths = ["tests"]
+python_files=["*.py"]

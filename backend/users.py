@@ -2,7 +2,7 @@ from utils import *
 
 @endpoint("/signup", ["email", "password"])
 def signup():
-    user=supabase.auth.sign_up({"email": email, "password": password})
+    user=auth.sign_up({"email": email, "password": password})
     if user["error"]!="":
         error=user["error"]
     else:
