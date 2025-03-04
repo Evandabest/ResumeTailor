@@ -60,6 +60,7 @@ def endpoint(endpoint, arguments, results=None):
             
             arguments.append("token")
             arguments = { k: request.json.get(k, None) for k in arguments}
+            
             if results is None:
                 results=[]
             results.append("error")
