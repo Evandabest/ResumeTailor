@@ -53,9 +53,10 @@ def endpoint(endpoint, arguments, results=None):
     """
 
     def decorator(f):
+        @app.route(endpoint, methods=["POST"])
         @functools.wraps(f)
         def wrapper(*args, **kwargs):
-            nonlocal results
+            nonlocal arguments, results
             
             arguments.append("token")
             arguments = { k: request.json.get(k, None) for k in arguments}
@@ -63,7 +64,7 @@ def endpoint(endpoint, arguments, results=None):
                 results=[]
             results.append("error")
             persistent_locals=PersistentLocals(f, arguments)
-            app.route(endpoint)(persistent_locals)(*args, **kwargs)
+            persistent_locals(*args, **kwargs)
 
             return {k: persistent_locals.locals[k] for k in results if k in persistent_locals}
             
