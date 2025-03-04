@@ -45,9 +45,9 @@ class PersistentLocals(object):
 
 def endpoint(endpoint, arguments, results=None):
     """
-    Injects the keys specified in `arguments` from the request JSON as local variables in the decorated function.
+    Injects the keys specified in `arguments` from the request JSON as local variables in the decorated function. The inclusion of `token` is implied.
 
-    Returns all of the locals whose names was specified by `results` in a single response JSON.
+    Returns all of the locals whose names was specified by `results` in a single response JSON. The inclusion of `error` is implied.
 
     This forces better self-documentation by not allowing the caller to use or return variables without specifying them ahead of time
     """
@@ -57,6 +57,7 @@ def endpoint(endpoint, arguments, results=None):
         def wrapper(*args, **kwargs):
             nonlocal results
             
+            arguments.append("token")
             arguments = { k: request.json.get(k, None) for k in arguments}
             if results is None:
                 results=[]
@@ -64,7 +65,7 @@ def endpoint(endpoint, arguments, results=None):
             persistent_locals=PersistentLocals(f, arguments)
             app.route(endpoint)(persistent_locals)(*args, **kwargs)
 
-            return {k: persistent_locals.locals[k] for k in results}
+            return {k: persistent_locals.locals[k] for k in results if k in persistent_locals}
             
         return wrapper
     return decorator
