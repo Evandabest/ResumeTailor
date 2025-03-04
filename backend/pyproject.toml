@@ -5,7 +5,7 @@ description = "Default template for PDM package"
 authors = [
     {name = "DUOLabs333", email = "dvdugo333@gmail.com"},
 ]
-dependencies = ["supabase>=2.13.0", "flask>=3.1.0"]
+dependencies = ["supabase>=2.13.0", "flask>=3.1.0", "dotenv>=0.9.9", "pytest>=8.3.5"]
 requires-python = "==3.11.*"
 readme = "README.md"
 license = {text = "MIT"}
@@ -13,3 +13,6 @@ license = {text = "MIT"}
 
 [tool.pdm]
 distribution = false
+
+[tool.pyright]
+extraPaths = ["__pypackages__/3.11/lib/"]
