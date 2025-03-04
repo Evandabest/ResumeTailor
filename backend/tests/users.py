@@ -22,16 +22,14 @@ def test_signup(client):
     If a user does not give both username and password, it should return an error 
     """
     for data in [{"email": "", "password": ""}, {"email": email1, "password":""}, {"email": "", "password": password1}]:
-        response = client.post("/signup", json=data)
+        resp = client.post("/signup", json=data)
 
-        print(response)
+        assert resp.status_code==500
 
-        response=response.json
+        response=resp.json
     
         assert response is not None
         
-        print(response["error"])
+        assert len(response.keys())==2
 
-        assert len(response.keys())==1
-
-        assert response["error"]!=""
+        assert response["error"] in ["AuthInvalidCredentialsError", "AuthApiError"]
