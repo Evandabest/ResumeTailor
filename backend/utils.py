@@ -21,14 +21,16 @@ class PersistentLocals(object):
             if event=='return':
                 self._locals = frame.f_locals.copy()
 
+            elif event=="call":
+                if(frame.f_code==self.func.__code__):
+                    frame.f_locals.update(self.locals_dict)
+
         # tracer is activated on next call, return or exception
         sys.setprofile(tracer)
         try:
             # trace the function call
             
-            res=types.FunctionType(self.func.__code__, self.locals_dict, None, self.func.__defaults__, self.func.__closure__)(*args,**kwargs)
-                        
-            #res=eval(self.func.__code__, None, l)
+            res=self.func(*args, **kwargs)
         finally:
             # disable tracer and replace with old one
             sys.setprofile(None)
@@ -43,7 +45,7 @@ class PersistentLocals(object):
 
 def endpoint(endpoint, arguments, results=None):
     """
-    Injects the keys specified in `arguments` from the request JSON as global variables in the decorated function.
+    Injects the keys specified in `arguments` from the request JSON as local variables in the decorated function.
 
     Returns all of the locals whose names was specified by `results` in a single response JSON.
 
@@ -55,14 +57,14 @@ def endpoint(endpoint, arguments, results=None):
         def wrapper(*args, **kwargs):
             nonlocal results
             
-            arguments = { k: request.json[k] for k in arguments}
+            arguments = { k: request.json.get(k, None) for k in arguments}
             if results is None:
                 results=[]
             results.append("error")
             persistent_locals=PersistentLocals(f, arguments)
             app.route(endpoint)(persistent_locals)(*args, **kwargs)
 
-            return {k: persistent_locals.locals.get(k, "") for k in results}
+            return {k: persistent_locals.locals[k] for k in results}
             
         return wrapper
     return decorator
