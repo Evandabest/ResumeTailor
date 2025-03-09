@@ -1,5 +1,4 @@
 import pytest
-#from pytest_mock import MockFixture
 
 from ..app import *
 
@@ -17,7 +16,7 @@ email3="test3@test.com"
 password1="test123abc"
 password2="test"
 
-def is_error(response): #Similar to Rust's unwrap
+def is_error(response):
 
     assert response.status_code == 500
 
@@ -28,7 +27,8 @@ def is_error(response): #Similar to Rust's unwrap
     for key in ["error", "message"]:
         assert response.get(key, "") != ""
 
-def is_success(response):
+def is_success(response):  #Similar to Rust's unwrap
+
     assert response.status_code == 200
 
     response=response.json
@@ -44,14 +44,12 @@ def test_signup_invalid_credentials(client):
     """
     If a user tries to sign up, but does not give both username and password, it should return an error 
     """
-    for data in [{"email": "", "password": ""}, {"email": email1, "password":""}, {"email": "", "password": password1}]:
-        response = client.post("/signup", json=data)
-
-        is_error(response)
+    for data in [("", "" ), (email1, ""), ("", password1)]:
+        is_error(client.post("/signup", json={"email": data[0], "password": data[1]}))
 
 def test_signup_valid_credentials(client):
     """
-    If a user signs up with a valid username and password, it should succeed
+    If a user tries to sign up with a valid username and password, it should succeed
     """
 
     data={"email": email1, "password": password1}
@@ -69,12 +67,47 @@ def test_signup_duplicate(client):
 
     data={"email": email1, "password": password1}
 
-    response = client.post("/signup", json=data)
+    is_error(client.post("/signup", json=data))
 
-    is_error(response)
-
-def test_login_valid(client):
+def test_login_invalid_credentials(client):
     """
+    If a user tries to log in with either a blank username or blank password, it should fail
+    """
+
+    for data in [("", "" ), (email1, ""), ("", password1)]:
+        is_error(client.post("/login", json={"email": email1, "password": password1}))
+
+def test_login_nonexistent_account(client):
+    """
+    If a user tries to log in with a non-existent account, it should fail
+    """
+
+    is_error(client.post("/login", json={"email": email2, "password": password1}))
+
+def test_login_invalid_password(client):
+    """
+    If a user tries to log in with an incorrect password, it should fail
+    """
+
+    is_error(client.post("/login", json={"email": email1, "password": password2}))
+
+token=""
+def test_login_valid(client):
+    global token
+
+    """
+    If a user tries to log in with a correct username and password, it should succeed
+    """
+
+    response=is_success(client.post("/login", json={"email": email1, "password": password1}))
+
+    token=response.get("token", "")
+
+    assert token != ""
+
+
+
+
 
 
 
