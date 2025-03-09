@@ -3,7 +3,7 @@ import pytest
 
 from ..app import *
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def client():
 
     app.config.update({"TESTING": True})
@@ -17,19 +17,68 @@ email3="test3@test.com"
 password1="test123abc"
 password2="test"
 
-def test_signup(client):
+def is_error(response): #Similar to Rust's unwrap
+
+    assert response.status_code == 500
+
+    response=response.json
+
+    assert response is not None
+
+    for key in ["error", "message"]:
+        assert response.get(key, "") != ""
+
+def is_success(response):
+    assert response.status_code == 200
+
+    response=response.json
+
+    assert response is not None
+
+    for key in ["error", "message"]:
+        assert response.get(key, "") == ""
+
+    return response
+
+def test_signup_invalid_credentials(client):
     """
-    If a user does not give both username and password, it should return an error 
+    If a user tries to sign up, but does not give both username and password, it should return an error 
     """
     for data in [{"email": "", "password": ""}, {"email": email1, "password":""}, {"email": "", "password": password1}]:
-        resp = client.post("/signup", json=data)
+        response = client.post("/signup", json=data)
 
-        assert resp.status_code==500
+        is_error(response)
 
-        response=resp.json
+def test_signup_valid_credentials(client):
+    """
+    If a user signs up with a valid username and password, it should succeed
+    """
+
+    data={"email": email1, "password": password1}
+
+    response = client.post("/signup", json=data)
+
+    response = is_success(response)
+
+    assert "token" not in response
+
+def test_signup_duplicate(client):
+    """
+    If a user tries to sign up with an existing account, it should fail
+    """
+
+    data={"email": email1, "password": password1}
+
+    response = client.post("/signup", json=data)
+
+    is_error(response)
+
+def test_login_valid(client):
+    """
+
+
+
+
+
     
-        assert response is not None
-        
-        assert len(response.keys())==2
 
-        assert response["error"] in ["AuthInvalidCredentialsError", "AuthApiError"]

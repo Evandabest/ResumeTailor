@@ -12,7 +12,7 @@ def login():
     user=client.auth.sign_up({"email": email, "password": password})
 
     token=user["access_token"]
-#signup, signup, login, modify, signup with new details, signup with old details, login with new details, delete both
+#signup, signup, login, login (doesn't exist) modify, signup with new details, signup with old details, login with new details, delete both
 @endpoint("/modify", ["email", "password"], ["email"])
 def modify():
     #email and/or password should be the NEW email and password, respectively

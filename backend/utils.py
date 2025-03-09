@@ -74,7 +74,11 @@ def endpoint(endpoint, parameters, outputs=None):
                 persistent_locals.locals["error"]=e.__class__.__name__
                 persistent_locals.locals["message"]=str(e)
                 status=500
-
+            
+            for key in ["error", "message"]:
+                if key not in persistent_locals.locals:
+                    persistent_locals.locals[key]=""
+                    
             return {k: persistent_locals.locals[k] for k in outputs_ if k in persistent_locals.locals}, (200 if status is None else status)
             
         return wrapper
