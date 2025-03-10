@@ -10,9 +10,14 @@ def client():
     with app.test_client() as client:
         yield client
 
+        try:
+            test_delete_users(client)
+        except AssertionError:
+            pass
+
 email1="test1@test.com"
 email2="test2@test.com"
-email3="test3@test.com"
+
 password1="test123abc"
 password2="test"
 
@@ -121,16 +126,21 @@ def test_modify_invalid(client):
 def test_modify_valid(client):
     """
     If a user tries to modify their account with a valid email and/or password, it should succeed
+
+    Additionally, if they try to sign in with their new credentials, it should succeed
     """
 
     is_success(client.post("/modify", json={"token": token, "password": password2}))
+    assert is_success(client.post("/login", json={"email": email1, "password": password2})).get("token", "")!=""
 
     assert is_success(client.post("/modify", json={"token": token, "email": email2}))["email"]==email2
+    assert is_success(client.post("/login", json={"email": email2, "password": password2})).get("token", "")!=""
 
     assert is_success(client.post("/modify", json={"token": token, "email": email1, "password": password1}))["email"]==email1
-
+    assert is_success(client.post("/login", json={"email": email1, "password": password1})).get("token", "")!=""
 
     assert is_success(client.post("/modify", json={"token": token, "email": email2, "password": password2}))["email"]==email2
+    assert is_success(client.post("/login", json={"email": email2, "password": password2})).get("token", "")!=""
 
 def test_signup_new(client):
     """
@@ -139,13 +149,27 @@ def test_signup_new(client):
 
     is_success(client.post("/signup", json={"email": email1, "password": password1}))
 
-def test_login_new(client): #We don't test the effects of modifying just a username or password, as *hopefully*, that is unnecessary
-
+def test_delete_users(client): #These users are only defined for this test module alone (for other tests, a persistent user will already have been created)
     """
-    After a user modifies their account's login information, if they try to log in with those new credentials, it should succeed
+    If a user tries to delete their account, it should succeed
     """
 
-    is_success(client.post("/login", json={"email": email2, "password": password2}))
+    for user in [(email1, password1), (email2, password2)]:
+        token=is_success(client.get("/login", json={"email": user[0], "password": user[1]})).get("token", "")
+
+        assert token!=""
+
+        is_success(client.get("/delete", json={"token": token}))
+
+def test_login_deleted_account(client):
+    
+    """
+    If a user tries to log in with the credentials of a deleted account, it should fail
+    """
+
+    for user in [(email1, password1), (email2, password2)]:
+        is_error(client.post("/login", json={"email": user[0], "password": user[1]}))
+
 
 
 
