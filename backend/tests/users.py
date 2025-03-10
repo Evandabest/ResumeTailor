@@ -106,6 +106,51 @@ def test_login_valid(client):
     assert token != ""
 
 
+def test_modify_invalid(client):
+    
+    """
+    If a user tries to modify their account with a blank email or password, it should fail
+
+    """
+
+    for key in ["email", "password"]:
+        is_error(client.post("/modify", json={"token": token, key : ""}))
+
+    is_error(client.post("/modify", json={"token": token, "email": "", "password": ""}))
+
+def test_modify_valid(client):
+    """
+    If a user tries to modify their account with a valid email and/or password, it should succeed
+    """
+
+    is_success(client.post("/modify", json={"token": token, "password": password2}))
+
+    assert is_success(client.post("/modify", json={"token": token, "email": email2}))["email"]==email2
+
+    assert is_success(client.post("/modify", json={"token": token, "email": email1, "password": password1}))["email"]==email1
+
+
+    assert is_success(client.post("/modify", json={"token": token, "email": email2, "password": password2}))["email"]==email2
+
+def test_signup_new(client):
+    """
+    If a user tries to sign up with an account with the same email address that was used in an existing account that has since been modified to use a different email address, it should succeed
+    """
+
+    is_success(client.post("/signup", json={"email": email1, "password": password1}))
+
+def test_login_new(client): #We don't test the effects of modifying just a username or password, as *hopefully*, that is unnecessary
+
+    """
+    After a user modifies their account's login information, if they try to log in with those new credentials, it should succeed
+    """
+
+    is_success(client.post("/login", json={"email": email2, "password": password2}))
+
+
+
+
+
 
 
 
