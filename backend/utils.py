@@ -8,7 +8,9 @@ app = Flask(__name__)
 
 config=dotenv.dotenv_values()
 
-client = create_client(config["SUPABASE_URL"], config["SUPABASE_KEY"])
+User = create_client(config["SUPABASE_URL"], config["SUPABASE_USER_KEY"])
+
+Admin = create_client(config["SUPABASE_URL"], config["SUPABASE_ADMIN_KEY"])
 
 class PersistentLocals(object):
     def __init__(self, func, locals_dict):

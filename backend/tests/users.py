@@ -26,7 +26,7 @@ email1="test1@test.com"
 email2="test2@test.com"
 
 password1="test123abc"
-password2="test"
+password2="testabc123"
 
 def is_error(response):
 
@@ -68,7 +68,7 @@ def test_signup_valid_credentials(client):
 
     response = client.post("/signup", json=data)
     
-    print(response.json)
+    print("test_signup_valid_credentials:", response.json)
 
     response = is_success(response)
 
@@ -164,11 +164,11 @@ def test_delete_users(client): #These users are only defined for this test modul
     """
 
     for user in [(email1, password1), (email2, password2)]:
-        token=is_success(client.get("/login", json={"email": user[0], "password": user[1]})).get("token", "")
+        token=is_success(client.post("/login", json={"email": user[0], "password": user[1]})).get("token", "")
 
         assert token!=""
 
-        is_success(client.get("/delete", json={"token": token}))
+        is_success(client.post("/delete", json={"token": token}))
 
 def test_login_deleted_account(client):
     
