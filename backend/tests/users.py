@@ -60,6 +60,8 @@ def test_signup_valid_credentials(client):
     data={"email": email1, "password": password1}
 
     response = client.post("/signup", json=data)
+    
+    print(response.json)
 
     response = is_success(response)
 
