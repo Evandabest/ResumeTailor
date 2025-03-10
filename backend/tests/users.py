@@ -2,6 +2,15 @@ import pytest
 
 from ..app import *
 
+from . import ignore_asserts
+
+"""
+def disable_asserts(f):
+    def wrapper(*args, **kwargs):
+        def tracer(frame, event, arg):
+            if event=="exception":
+"""
+
 @pytest.fixture(scope="module")
 def client():
 
@@ -10,10 +19,8 @@ def client():
     with app.test_client() as client:
         yield client
 
-        try:
-            test_delete_users(client)
-        except AssertionError:
-            pass
+        
+        ignore_asserts(test_delete_users)(client)
 
 email1="test1@test.com"
 email2="test2@test.com"
