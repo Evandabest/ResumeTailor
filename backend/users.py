@@ -3,8 +3,8 @@ from utils import *
 #We'll let users sign up without verifying email; however, to receive emails (including to reset password), they must verify it first
 @endpoint("/signup", ["email", "password"])
 def signup():
-    user=client.auth.sign_up({"email": email, "password": password})
-    print(user)
+    user=client.auth.sign_up({"email": email, "password": password}).user
+
     client.table("users").insert({"id": user.id}).execute()
 
 
