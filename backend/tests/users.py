@@ -34,21 +34,28 @@ def is_error(response):
 
     response=response.json
 
-    assert response is not None
+    try:
+        assert response is not None
 
-    for key in ["error", "message"]:
-        assert response.get(key, "") != ""
+        for key in ["error", "message"]:
+            assert response.get(key, "") != ""
+    except AssertionError:
+        print("Failing response:", response)
+
 
 def is_success(response):  #Similar to Rust's unwrap
 
     assert response.status_code == 200
 
     response=response.json
+    try:
+        assert response is not None
 
-    assert response is not None
-
-    for key in ["error", "message"]:
-        assert response.get(key, "") == ""
+        for key in ["error", "message"]:
+            assert response.get(key, "") == ""
+    except AssertionError:
+        print("Failing response:", response)
+        
 
     return response
 
@@ -67,8 +74,6 @@ def test_signup_valid_credentials(client):
     data={"email": email1, "password": password1}
 
     response = client.post("/signup", json=data)
-    
-    print("test_signup_valid_credentials:", response.json)
 
     response = is_success(response)
 

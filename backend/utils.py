@@ -2,7 +2,7 @@ from supabase import *
 from flask import Flask, request
 import dotenv
 import functools
-import sys, types
+import sys, types, traceback
 
 app = Flask(__name__)
 
@@ -21,7 +21,8 @@ class PersistentLocals(object):
     def __call__(self, *args, **kwargs): #https://code.activestate.com/recipes/577283-decorator-to-expose-local-variables-of-a-function-/
         def tracer(frame, event, arg):
             if event=='return': #TODO: Make sure that this also fires when an exceptions bubbles up
-                self._locals = frame.f_locals.copy()
+                if(frame.f_code==self.func.__code__):
+                    self._locals = frame.f_locals.copy()
 
             elif event=="call":
                 if(frame.f_code==self.func.__code__):
@@ -76,6 +77,8 @@ def endpoint(endpoint, parameters, outputs=None):
                 persistent_locals.locals["error"]=e.__class__.__name__
                 persistent_locals.locals["message"]=str(e)
                 status=500
+                if app.testing:
+                    print(traceback.format_exc())
             
             for key in ["error", "message"]:
                 if key not in persistent_locals.locals:

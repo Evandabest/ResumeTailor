@@ -3,14 +3,15 @@ from utils import *
 #We'll let users sign up without verifying email; however, to receive emails (including to reset password), they must verify it first
 @endpoint("/signup", ["email", "password"])
 def signup():
-    user=User.auth.sign_in_with_password({"email": email, "password": password}).user
 
-    User.table("users").insert({"id": user.id}).execute()
+    user=User.auth.sign_up({"email": email, "password": password}).user
+
+    Admin.table("users").insert({"id": user.id}).execute()
 
 
 @endpoint("/login", ["email", "password"], ["token"])
 def login():
-    user=User.auth.sign_up({"email": email, "password": password})
+    user=User.auth.sign_in_with_password({"email": email, "password": password})
 
     token=user.session.access_token
 
