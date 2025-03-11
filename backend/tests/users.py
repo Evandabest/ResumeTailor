@@ -39,6 +39,7 @@ def is_error(response):
 
         for key in ["error", "message"]:
             assert response.get(key, "") != ""
+            pass
     except AssertionError:
         print("Failing response:", response)
 
@@ -53,6 +54,7 @@ def is_success(response):  #Similar to Rust's unwrap
 
         for key in ["error", "message"]:
             assert response.get(key, "") == ""
+            pass
     except AssertionError:
         print("Failing response:", response)
         
@@ -63,8 +65,8 @@ def test_signup_invalid_credentials(client):
     """
     If a user tries to sign up, but does not give both username and password, it should return an error 
     """
-    for data in [("", "" ), (email1, ""), ("", password1)]:
-        is_error(client.post("/signup", json={"email": data[0], "password": data[1]}))
+    for user in [("", "" ), (email1, ""), ("", password1)]:
+        is_error(client.post("/signup", json={"email": user[0], "password": user[1]}))
 
 def test_signup_valid_credentials(client):
     """
@@ -94,7 +96,7 @@ def test_login_invalid_credentials(client):
     """
 
     for data in [("", "" ), (email1, ""), ("", password1)]:
-        is_error(client.post("/login", json={"email": email1, "password": password1}))
+        is_error(client.post("/login", json={"email": data[0], "password": data[1]}))
 
 def test_login_nonexistent_account(client):
     """
@@ -124,7 +126,7 @@ def test_login_valid(client):
 
     assert token != ""
 
-
+#Skip all modify tests (and the signup new one), as modify REQUIRES you to validate the new email --- there is no option to skip this.
 def test_modify_invalid(client):
     
     """
