@@ -1,5 +1,7 @@
 from utils import *
 
+#TODO: Next step is GitHub account integration. After that, it's resume upload. After that, it's AI integration (first step, create project list in markdown. Next,rewrite it in the style of the uploaded latex. Next, pick a spot to add project list. Finally, just do replace).
+
 #We'll let users sign up without verifying email; however, to receive emails (including to reset password), they must verify it first
 @endpoint("/signup", ["email", "password"])
 def signup():

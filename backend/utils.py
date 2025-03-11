@@ -32,15 +32,19 @@ class PersistentLocals(object):
 
     def __call__(self, *args, **kwargs): #https://code.activestate.com/recipes/577283-decorator-to-expose-local-variables-of-a-function-/
         def tracer(frame, event, arg):
-            if event=='return': #TODO: Make sure that this also fires when an exceptions bubbles up
-                if(frame.f_code==self.func.__code__):
-                    self._locals = frame.f_locals.copy()
+            frame.f_trace_lines=False
+            frame.f_trace_opcodes=False
 
-            elif event=="call":
-                if(frame.f_code==self.func.__code__):
+            if (frame.f_code==self.func.__code__):
+                if event=='return':
+                    self._locals = frame.f_locals.copy()
+                elif event=='call':
                     frame.f_locals.update(self.locals_dict)
                     frame.f_globals.update(self.locals_dict)
-                return tracer
+
+                    return tracer
+            else:
+                frame.f_trace=old_trace
                     
         old_trace=sys.gettrace()
         sys.settrace(tracer)
