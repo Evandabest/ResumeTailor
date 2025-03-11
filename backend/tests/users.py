@@ -4,13 +4,6 @@ from ..app import *
 
 from . import ignore_asserts
 
-"""
-def disable_asserts(f):
-    def wrapper(*args, **kwargs):
-        def tracer(frame, event, arg):
-            if event=="exception":
-"""
-
 @pytest.fixture(scope="module")
 def client():
 
@@ -25,23 +18,26 @@ def client():
 email1="test1@test.com"
 email2="test2@test.com"
 
+
 password1="test123abc"
 password2="testabc123"
+
+user1=[email1, password1]
+user2=[email2, password2]
+
+token=""
 
 def is_error(response):
 
     assert response.status_code == 500
 
     response=response.json
+    
+    #We don't check that the error is from gotrue, as we may want to add our own custom errors later
+    assert response is not None
 
-    try:
-        assert response is not None
-
-        for key in ["error", "message"]:
-            assert response.get(key, "") != ""
-            pass
-    except AssertionError:
-        print("Failing response:", response)
+    for key in ["error", "message"]:
+        assert response.get(key, "") != ""
 
 
 def is_success(response):  #Similar to Rust's unwrap
@@ -49,15 +45,11 @@ def is_success(response):  #Similar to Rust's unwrap
     assert response.status_code == 200
 
     response=response.json
-    try:
-        assert response is not None
 
-        for key in ["error", "message"]:
-            assert response.get(key, "") == ""
-            pass
-    except AssertionError:
-        print("Failing response:", response)
-        
+    assert response is not None
+
+    for key in ["error", "message"]:
+        assert response.get(key, "") == ""
 
     return response
 
@@ -69,6 +61,7 @@ def test_signup_invalid_credentials(client):
         is_error(client.post("/signup", json={"email": user[0], "password": user[1]}))
 
 def test_signup_valid_credentials(client):
+    global user1
     """
     If a user tries to sign up with a valid username and password, it should succeed
     """
@@ -78,6 +71,8 @@ def test_signup_valid_credentials(client):
     response = client.post("/signup", json=data)
 
     response = is_success(response)
+
+    user1=[email1, password1]
 
     assert "token" not in response
 
@@ -112,7 +107,6 @@ def test_login_invalid_password(client):
 
     is_error(client.post("/login", json={"email": email1, "password": password2}))
 
-token=""
 def test_login_valid(client):
     global token
 
@@ -126,7 +120,8 @@ def test_login_valid(client):
 
     assert token != ""
 
-#Skip all modify tests (and the signup new one), as modify REQUIRES you to validate the new email --- there is no option to skip this.
+    assert response.get("refresh_token", "") != ""
+
 def test_modify_invalid(client):
     
     """
@@ -140,6 +135,8 @@ def test_modify_invalid(client):
     is_error(client.post("/modify", json={"token": token, "email": "", "password": ""}))
 
 def test_modify_valid(client):
+    global token, user1
+
     """
     If a user tries to modify their account with a valid email and/or password, it should succeed
 
@@ -147,33 +144,42 @@ def test_modify_valid(client):
     """
 
     is_success(client.post("/modify", json={"token": token, "password": password2}))
-    assert is_success(client.post("/login", json={"email": email1, "password": password2})).get("token", "")!=""
+    token=is_success(client.post("/login", json={"email": email1, "password": password2}))["token"]
+
+    user1[1]=password2
 
     assert is_success(client.post("/modify", json={"token": token, "email": email2}))["email"]==email2
-    assert is_success(client.post("/login", json={"email": email2, "password": password2})).get("token", "")!=""
+    token=is_success(client.post("/login", json={"email": email2, "password": password2}))["token"]
+
+    user1[0]=email2
 
     assert is_success(client.post("/modify", json={"token": token, "email": email1, "password": password1}))["email"]==email1
-    assert is_success(client.post("/login", json={"email": email1, "password": password1})).get("token", "")!=""
+    token=is_success(client.post("/login", json={"email": email1, "password": password1}))["token"]
+
+    user1=[email1, password1]
 
     assert is_success(client.post("/modify", json={"token": token, "email": email2, "password": password2}))["email"]==email2
-    assert is_success(client.post("/login", json={"email": email2, "password": password2})).get("token", "")!=""
+    token=is_success(client.post("/login", json={"email": email2, "password": password2}))["token"]
+
+    user1=[email2, password2]
 
 def test_signup_new(client):
+    global user2
     """
     If a user tries to sign up with an account with the same email address that was used in an existing account that has since been modified to use a different email address, it should succeed
     """
 
     is_success(client.post("/signup", json={"email": email1, "password": password1}))
 
+    user2=[email1, password1]
+
 def test_delete_users(client): #These users are only defined for this test module alone (for other tests, a persistent user will already have been created)
     """
     If a user tries to delete their account, it should succeed
     """
 
-    for user in [(email1, password1), (email2, password2)]:
-        token=is_success(client.post("/login", json={"email": user[0], "password": user[1]})).get("token", "")
-
-        assert token!=""
+    for user in [user1, user2]:
+        token=is_success(client.post("/login", json={"email": user[0], "password": user[1]}))["token"]
 
         is_success(client.post("/delete", json={"token": token}))
 
@@ -183,7 +189,7 @@ def test_login_deleted_account(client):
     If a user tries to log in with the credentials of a deleted account, it should fail
     """
 
-    for user in [(email1, password1), (email2, password2)]:
+    for user in [user1, user2]:
         is_error(client.post("/login", json={"email": user[0], "password": user[1]}))
 
 

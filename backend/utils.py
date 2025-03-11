@@ -1,8 +1,7 @@
 from supabase import *
-from flask import Flask, request
-import dotenv
-import functools
-import sys, types, traceback
+from flask import Flask, request, url_for
+import sys, types, traceback, functools
+import dotenv, jwt, requests
 
 app = Flask(__name__)
 
@@ -11,6 +10,10 @@ config=dotenv.dotenv_values()
 User = create_client(config["SUPABASE_URL"], config["SUPABASE_USER_KEY"])
 
 Admin = create_client(config["SUPABASE_URL"], config["SUPABASE_ADMIN_KEY"])
+
+class StaleTokenError(Exception):
+    def __str__(self):
+        return "This token has expired. Please /login or /refresh to get a new one."
 
 class PersistentLocals(object):
     def __init__(self, func, locals_dict):
@@ -72,19 +75,36 @@ def endpoint(endpoint, parameters, outputs=None):
             outputs_.extend(["error", "message"])
             persistent_locals=PersistentLocals(f, parameters_)
             try:
-                status=persistent_locals(*args, **kwargs)
+                token=parameters_["token"]
+
+                if (token is not None):  #https://supabase.com/docs/guides/auth/sessions#how-to-ensure-an-access-token-jwt-cannot-be-used-after-a-user-signs-out
+                    try:
+                        User.auth.get_user(token)
+                    except:
+                        raise StaleTokenError
+                    else:
+                        session_id=jwt.decode(token, config["SUPABASE_JWT_SECRET"], algorithms=["HS256"], options={"verify_signature": False})["session_id"]
+                        session_count=len(Admin.table("auth.sessions").select("id").eq("id", session_id).execute()["data"])
+
+                        if session_count==0:
+                            raise StaleTokenError
+
+                persistent_locals(*args, **kwargs)
             except Exception as e:
                 persistent_locals.locals["error"]=e.__class__.__name__
                 persistent_locals.locals["message"]=str(e)
-                status=500
+                persistent_locals.locals["status_code"]=500
+
                 if app.testing:
                     print(traceback.format_exc())
-            
+
+            status_code=persistent_locals.locals.get("status_code", 200)
+
             for key in ["error", "message"]:
                 if key not in persistent_locals.locals:
                     persistent_locals.locals[key]=""
                     
-            return {k: persistent_locals.locals[k] for k in outputs_ if k in persistent_locals.locals}, (200 if status is None else status)
+            return {k: persistent_locals.locals[k] for k in outputs_ if k in persistent_locals.locals}, status_code
             
         return wrapper
     return decorator
