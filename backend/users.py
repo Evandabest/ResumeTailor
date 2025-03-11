@@ -6,7 +6,7 @@ def signup():
 
     user=User.auth.sign_up({"email": email, "password": password}).user
 
-    Admin.table("users").insert({"id": user.id}).execute()
+    Admin.table("profiles").insert({"id": user.id}).execute()
 
 
 @endpoint("/login", ["email", "password"], ["token", "refresh_token"])
@@ -15,7 +15,7 @@ def login():
 
     token=user.session.access_token
 
-    print(token)
+    #print(token)
 
     refresh_token=user.session.refresh_token
 
@@ -46,12 +46,18 @@ def modify():
     user=Admin.auth.admin.update_user_by_id(User.auth.get_user(token).user.id, update_dict).user
 
     if email is not None:
+        print("New email:", user.email)
+        print("Argument:", email)
         email=user.email
-        response=requests.post(url_for("logout"), json={"token": token, "scope": "global"}).json #TODO: Sign out everywhere
 
-        status_code=response["status_code"]
-        error=response["error"]
-        message=response["message"]
+        if password is None:
+            with app.test_client() as client:
+                response=client.post("logout", json={"token": token, "scope": "global"}) #TODO: Sign out everywhere
+                status_code=response.status_code
+
+                response=response.json
+                error=response["error"]
+                message=response["message"]
 
 
 @endpoint("/logout", ["token", "scope"])
@@ -67,7 +73,7 @@ def delete():
     user_id=User.auth.get_user(token).user.id
     Admin.auth.admin.delete_user(user_id)
 
-    Admin.table("users").delete().eq("id", user_id).execute()
+    Admin.table("profiles").delete().eq("id", user_id).execute()
 
 
 

@@ -1,15 +1,24 @@
 from supabase import *
 from flask import Flask, request, url_for
 import sys, types, traceback, functools
-import dotenv, jwt, requests
+import dotenv, jwt, requests, sqlalchemy as sql
 
 app = Flask(__name__)
 
 config=dotenv.dotenv_values()
 
 User = create_client(config["SUPABASE_URL"], config["SUPABASE_USER_KEY"])
-
 Admin = create_client(config["SUPABASE_URL"], config["SUPABASE_ADMIN_KEY"])
+
+engine=sql.create_engine(sql.URL.create(
+"postgresql+psycopg2",
+username=config["SUPABASE_PSQL_USER"],
+password=config["SUPABASE_PSQL_PASSWORD"],
+host=config["SUPABASE_PSQL_HOST"],
+port=int(config["SUPABASE_PSQL_PORT"]),
+database=config["SUPABASE_PSQL_DBNAME"],
+query={"sslmode": "disable"}
+))
 
 class StaleTokenError(Exception):
     def __str__(self):
@@ -31,16 +40,16 @@ class PersistentLocals(object):
                 if(frame.f_code==self.func.__code__):
                     frame.f_locals.update(self.locals_dict)
                     frame.f_globals.update(self.locals_dict)
+                return tracer
                     
-        # tracer is activated on next call, return or exception
-        sys.setprofile(tracer)
+        old_trace=sys.gettrace()
+        sys.settrace(tracer)
         try:
             # trace the function call
-            
             res=self.func(*args, **kwargs)
         finally:
             # disable tracer and replace with old one
-            sys.setprofile(None)
+            sys.settrace(old_trace)
         return res
 
     def clear_locals(self):
@@ -84,10 +93,10 @@ def endpoint(endpoint, parameters, outputs=None):
                         raise StaleTokenError
                     else:
                         session_id=jwt.decode(token, config["SUPABASE_JWT_SECRET"], algorithms=["HS256"], options={"verify_signature": False})["session_id"]
-                        session_count=len(Admin.table("auth.sessions").select("id").eq("id", session_id).execute()["data"])
 
-                        if session_count==0:
-                            raise StaleTokenError
+                        with engine.connect() as connection:
+                            if connection.execute(sql.text("SELECT id FROM auth.sessions WHERE id = :id LIMIT 1"), {"id": session_id}).first() is None:
+                                raise StaleTokenError
 
                 persistent_locals(*args, **kwargs)
             except Exception as e:
@@ -103,7 +112,7 @@ def endpoint(endpoint, parameters, outputs=None):
             for key in ["error", "message"]:
                 if key not in persistent_locals.locals:
                     persistent_locals.locals[key]=""
-                    
+
             return {k: persistent_locals.locals[k] for k in outputs_ if k in persistent_locals.locals}, status_code
             
         return wrapper
