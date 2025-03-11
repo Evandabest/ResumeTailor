@@ -25,7 +25,9 @@ def modify():
         update_dict["email"]=email
     if password is not None:
         update_dict["password"]=password
-    response=User.auth.update_user(update_dict)
+    #response=User.auth.update_user(update_dict) #This will not work, as modifying the email of as a user REQUIRES you to validate the new email --- unlike with signing up, there is NO option available in the dashboard for you to skip this
+
+    response=Admin.auth.admin.update_user_by_id(User.auth.get_user(token).user.id, update_dict)
 
     if email is not None:
         email=response.email
