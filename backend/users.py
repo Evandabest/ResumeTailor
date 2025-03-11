@@ -46,13 +46,12 @@ def modify():
     user=Admin.auth.admin.update_user_by_id(User.auth.get_user(token).user.id, update_dict).user
 
     if email is not None:
-        print("New email:", user.email)
-        print("Argument:", email)
         email=user.email
 
         if password is None:
             with app.test_client() as client:
-                response=client.post("logout", json={"token": token, "scope": "global"}) #TODO: Sign out everywhere
+                response=client.post("logout", json={"token": token, "scope": "global"}) #Sign out everywhere
+
                 status_code=response.status_code
 
                 response=response.json
