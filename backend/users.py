@@ -8,8 +8,6 @@ def signup():
 
     user=User.auth.sign_up({"email": email, "password": password}).user
 
-    Admin.table("profiles").insert({"id": user.id}).execute()
-
 
 @endpoint("/login", ["email", "password"], ["token", "refresh_token"])
 def login():
@@ -73,8 +71,6 @@ def delete():
 
     user_id=User.auth.get_user(token).user.id
     Admin.auth.admin.delete_user(user_id)
-
-    Admin.table("profiles").delete().eq("id", user_id).execute()
 
 
 

@@ -4,18 +4,19 @@ This acts as the "utils.py" for test.py, as I don't want to clutter up the "test
 
 import sys, functools, ast, collections, inspect, pathlib
 
-asserts=collections.defaultdict(lambda: {})
-
 @functools.cache
 def get_all_asserts(filename):
     root=ast.parse(open(filename).read())
-    
+    asserts={}
+
     class AssertionFinder(ast.NodeVisitor):
             def generic_visit(self, node):
                 if isinstance(node, ast.Assert):
-                    asserts[filename][node.lineno]=(ast.unparse(node.test), node.end_lineno)
+                    asserts[node.lineno]=(ast.unparse(node.test), node.end_lineno)
                 super().generic_visit(node)
     AssertionFinder().visit(root)
+
+    return asserts
 
 def ignore_asserts(f): #None of this would be needed if Python just supported (syntactic) macros like everyone else
     def wrapper(*args, **kwargs):
@@ -31,10 +32,10 @@ def ignore_asserts(f): #None of this would be needed if Python just supported (s
             if pathlib.Path(__file__).resolve().parents[0] not in pathlib.Path(filename).parents: #Determine if file is in "tests" directory
                 return
 
-            get_all_asserts(filename)
+            asserts=get_all_asserts(filename)
         
             if event=="line":
-                info = asserts[filename].get(frame.f_lineno, None)
+                info = asserts.get(frame.f_lineno, None)
                 if info is not None:
                     exec(info[0], frame.f_globals, frame.f_locals)
                     frame.f_lineno=info[1]+1
