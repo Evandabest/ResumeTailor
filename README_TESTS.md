@@ -49,14 +49,6 @@ test('GitHub integration flow', async ({ page }) => {
 })
 ```
 
-# CI Pipeline
-
-GitHub Actions workflow at `.github/workflows/test.yml`:
-- Runs on every push and pull request
-- Executes all automated tests
-- Reports test failures
-- Tracks code coverage through Codecov
-
 # Repository Organization
 
 ```
