@@ -229,4 +229,5 @@ def github_projects():
     # Get cached projects
     result = Admin.table("github_projects").select("*").eq("user_id", user_id_str).order("updated_at.desc").execute()
     
-    return {"projects": result.data}
+    # Set a local variable instead of returning a dictionary
+    projects = result.data
