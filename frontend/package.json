@@ -7,9 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test:e2e": "playwright test",
+    "test:e2e": "playwright test --reporter=html",
     "test:e2e:ui": "playwright test --ui",
-    "playwright:install": "playwright install chromium"
+    "playwright:install": "playwright install chromium",
+    "coverage": "jest --coverage"
   },
   "dependencies": {
     "@radix-ui/react-dropdown-menu": "^2.1.6",
