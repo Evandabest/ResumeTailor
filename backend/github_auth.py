@@ -25,8 +25,8 @@ def github_link():
             GITHUB_TOKEN_URL,
             headers={"Accept": "application/json"},
             data={
-                "client_id": config["GITHUB_CLIENT_ID"],
-                "client_secret": config["GITHUB_CLIENT_SECRET"],
+                "client_id": config["NEXT_GITHUB_CLIENT_ID"],
+                "client_secret": config["NEXT_GITHUB_CLIENT_SECRET"],
                 "code": code
             }
         )
