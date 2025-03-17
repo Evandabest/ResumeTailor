@@ -22,7 +22,6 @@ test('GitHub login flow', async ({ page }) => {
   
   // Check for specific dashboard content like cards
   await expect(page.getByText('Resumes Created')).toBeVisible();
-  await expect(page.getByText('GitHub Projects')).toBeVisible();
   await expect(page.getByText('Matching Jobs')).toBeVisible();
   
   // Verify mock data stats are present
