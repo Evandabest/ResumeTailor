@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { FaGithub, FaFileAlt, FaRobot, FaSearch, FaEdit, FaUpload, FaLink, FaCheckCircle } from 'react-icons/fa';
+import Image from 'next/image';
+import { FaGithub, FaFileAlt, FaRobot, FaSearch, FaEdit, FaUpload, FaLink } from 'react-icons/fa';
 
 export default function Home() {
   const [email, setEmail] = useState('');
@@ -40,8 +41,8 @@ export default function Home() {
               <img 
                 src="/resume-preview.png" 
                 alt="Resume preview" 
-                className="w-[64rem] h-[32rem] rounded-lg"
-                onError={(e) => {
+                className="w-[64rem] h-[32rem] rounded-lg object-cover"
+                onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
                   e.currentTarget.src = "https://via.placeholder.com/800x450?text=Resume+Preview";
                 }}
               />

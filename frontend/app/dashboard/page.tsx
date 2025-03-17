@@ -3,8 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { 
-  FaFileAlt, FaGithub, FaSearch, FaBriefcase, 
-  FaPlus, FaEllipsisH, FaStar, FaCode, FaChartLine,
+  FaFileAlt, FaGithub, FaBriefcase, 
+  FaPlus, FaEllipsisH, FaStar, FaChartLine,
   FaCheckCircle
 } from "react-icons/fa";
 import {
@@ -213,7 +213,7 @@ export default function DashboardPage() {
                     <FaFileAlt className="h-5 w-5 text-blue-700" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-medium">Created "Software Engineer - Google" resume</p>
+                    <p className="text-sm font-medium">Created &quot;Software Engineer - Google&quot; resume</p>
                     <p className="text-xs text-gray-500">March 10, 2025</p>
                   </div>
                 </div>
@@ -222,7 +222,7 @@ export default function DashboardPage() {
                     <FaGithub className="h-5 w-5 text-blue-700" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-medium">Connected GitHub repository "algorithm-visualizer"</p>
+                    <p className="text-sm font-medium">Connected GitHub repository &quot;algorithm-visualizer&quot;</p>
                     <p className="text-xs text-gray-500">February 15, 2025</p>
                   </div>
                 </div>
@@ -231,7 +231,7 @@ export default function DashboardPage() {
                     <FaBriefcase className="h-5 w-5 text-blue-700" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-medium">Applied to "Full Stack Developer" at Shopify</p>
+                    <p className="text-sm font-medium">Applied to &quot;Full Stack Developer&quot; at Shopify</p>
                     <p className="text-xs text-gray-500">March 10, 2025</p>
                   </div>
                 </div>

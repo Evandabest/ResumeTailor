@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FaGithub, FaBars, FaTimes, FaUser } from "react-icons/fa";
+import {FaBars, FaTimes, FaUser } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
