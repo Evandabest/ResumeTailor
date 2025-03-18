@@ -2,6 +2,7 @@ import pytest
 from unittest.mock import patch
 from ..app import app, Admin, User
 from ..github_auth import GitHubAuthError
+from .users import is_success
 import os
 
 @pytest.fixture
@@ -55,8 +56,8 @@ def test_github_projects_database_integration(client, cleanup_user):
         "email": test_email,
         "password": test_password
     })
-    assert login_resp.status_code == 200
-    auth_token = login_resp.json["token"]
+    
+    auth_token = is_success(login_resp)["token"]
     user = User.auth.get_user(auth_token).user
     
     # Store auth token for cleanup
