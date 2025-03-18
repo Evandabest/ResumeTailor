@@ -2,7 +2,6 @@ from .utils import *
 import requests
 from datetime import datetime, timedelta
 import base64
-import uuid  # Add UUID import
 
 GITHUB_AUTH_URL = "https://github.com/login/oauth/authorize"
 GITHUB_TOKEN_URL = "https://github.com/login/oauth/access_token"
@@ -52,13 +51,7 @@ def github_link():
         
         github_user = user_response.json()
         user_id = User.auth.get_user(token).user.id
-        
-        # Validate user_id is a valid UUID
-        try:
-            uuid_obj = uuid.UUID(user_id)
-            user_id_str = str(uuid_obj)
-        except ValueError:
-            raise ValueError(f"Invalid user ID format: {user_id}")
+    
         
         # Update user profile with GitHub info
         Admin.table("profiles").update({
@@ -74,13 +67,6 @@ def github_link():
 def github_unlink():
     user_id = User.auth.get_user(token).user.id
     
-    # Validate user_id is a valid UUID
-    try:
-        uuid_obj = uuid.UUID(user_id)
-        user_id_str = str(uuid_obj)
-    except ValueError:
-        raise ValueError(f"Invalid user ID format: {user_id}")
-    
     # Remove GitHub info from profile and cached projects
     Admin.table("profiles").update({
         "github_id": None,
@@ -94,13 +80,6 @@ def github_unlink():
 @endpoint("/github/update", [])
 def github_update():
     user_id = User.auth.get_user(token).user.id
-    
-    # Validate user_id is a valid UUID
-    try:
-        uuid_obj = uuid.UUID(user_id)
-        user_id_str = str(uuid_obj)
-    except ValueError:
-        raise ValueError(f"Invalid user ID format: {user_id}")
     
     # Get user profile with GitHub info
     result = Admin.table("profiles").select("github_access_token", "github_last_update").eq("id", user_id_str).execute()
@@ -208,13 +187,6 @@ def github_update():
 @endpoint("/github/projects", [], ["projects"])
 def github_projects():
     user_id = User.auth.get_user(token).user.id
-    
-    # Validate user_id is a valid UUID
-    try:
-        uuid_obj = uuid.UUID(user_id)
-        user_id_str = str(uuid_obj)
-    except ValueError:
-        raise ValueError(f"Invalid user ID format: {user_id}")
     
     # First try to update cached data
     try:
