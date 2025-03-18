@@ -1,0 +1,45 @@
+
+> frontend@0.1.0 test:coverage
+> jest --coverage
+
+  console.warn
+    Your app (or one of its dependencies) is using an outdated JSX transform. Update to the modern JSX transform for faster performance: https://react.dev/link/new-jsx-transform
+
+      17 |
+      18 |   test('handleLogin sets loading state and calls router', async () => {
+    > 19 |     render(<LoginPage />)
+         |            ^
+      20 |     
+      21 |     // Fill in login form
+      22 |     fireEvent.change(screen.getByLabelText(/email/i), {
+
+      at Object.<anonymous>.process.env.NODE_ENV.exports.createElement (node_modules/react/cjs/react.development.js:1297:19)
+      at Object.__jsx (__tests__/LoginPage.test.tsx:19:12)
+
+  console.log
+    Login with: { loginEmail: 'test@example.com', loginPassword: 'password123' }
+
+      at log (app/login/page.tsx:33:15)
+
+-----------------------|---------|----------|---------|---------|-------------------
+File                   | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+-----------------------|---------|----------|---------|---------|-------------------
+All files              |    8.62 |      3.7 |    8.47 |    8.37 |                   
+ app                   |       0 |      100 |       0 |       0 |                   
+  layout.tsx           |       0 |      100 |       0 |       0 | 6-26              
+  page.tsx             |       0 |      100 |       0 |       0 | 8-155             
+ app/api               |       0 |        0 |       0 |       0 |                   
+  route.ts             |       0 |        0 |       0 |       0 | 4-39              
+ app/create            |       0 |        0 |       0 |       0 |                   
+  page.tsx             |       0 |        0 |       0 |       0 | 11-83             
+ app/dashboard         |       0 |        0 |       0 |       0 |                   
+  page.tsx             |       0 |        0 |       0 |       0 | 35-427            
+ app/login             |   41.46 |      100 |   38.46 |    42.1 |                   
+  page.tsx             |   41.46 |      100 |   38.46 |    42.1 | 39-82,173-208     
+ app/resumes           |       0 |        0 |       0 |       0 |                   
+  page.tsx             |       0 |        0 |       0 |       0 | 32-287            
+ app/resumes/[id]      |       0 |        0 |       0 |       0 |                   
+  page.tsx             |       0 |        0 |       0 |       0 |                   
+ app/resumes/[id]/edit |       0 |        0 |       0 |       0 |                   
+  page.tsx             |       0 |        0 |       0 |       0 | 28-332            
+-----------------------|---------|----------|---------|---------|-------------------

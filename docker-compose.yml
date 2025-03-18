@@ -1,0 +1,11 @@
+version: '3.8'
+services:
+  latex-compiler:
+    build:
+      context: ./docker
+      dockerfile: Dockerfile.latex
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./tmp:/app/tmp
+    restart: unless-stopped
