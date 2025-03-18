@@ -11,7 +11,8 @@
     "test:coverage": "jest --coverage",
     "test:e2e": "playwright test",
     "test:watch": "jest --watch",
-    "test:single": "jest"
+    "test:single": "jest",
+    "test:workflow": "node scripts/test-workflow.js"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
