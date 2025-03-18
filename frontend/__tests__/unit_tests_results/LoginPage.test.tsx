@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import LoginPage from '../app/login/page'
+import LoginPage from '../../app/login/page'
 import { useRouter } from 'next/navigation'
 
 // Mock next/navigation
