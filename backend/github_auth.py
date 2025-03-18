@@ -50,7 +50,7 @@ def github_link():
             raise GitHubAPIError(f"Failed to get GitHub user info: {user_response.text}")
         
         github_user = user_response.json()
-        user_id = User.auth.get_user(token).user.id
+        user_id_str = User.auth.get_user(token).user.id
     
         
         # Update user profile with GitHub info
@@ -65,7 +65,7 @@ def github_link():
 
 @endpoint("/github/unlink", [])
 def github_unlink():
-    user_id = User.auth.get_user(token).user.id
+    user_id_str = User.auth.get_user(token).user.id
     
     # Remove GitHub info from profile and cached projects
     Admin.table("profiles").update({
@@ -79,7 +79,7 @@ def github_unlink():
 
 @endpoint("/github/update", [])
 def github_update():
-    user_id = User.auth.get_user(token).user.id
+    user_id_str = User.auth.get_user(token).user.id
     
     # Get user profile with GitHub info
     result = Admin.table("profiles").select("github_access_token", "github_last_update").eq("id", user_id_str).execute()
@@ -186,7 +186,7 @@ def github_update():
 
 @endpoint("/github/projects", [], ["projects"])
 def github_projects():
-    user_id = User.auth.get_user(token).user.id
+    user_id_str = User.auth.get_user(token).user.id
     
     # First try to update cached data
     try:
