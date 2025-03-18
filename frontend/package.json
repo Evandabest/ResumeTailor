@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "test": "jest",
+    "test:integration": "jest --testMatch='**/*.integration.test.{ts,tsx}'",
     "test:coverage": "jest --coverage",
     "codecov": "codecov",
     "test-play": "playwright test"
