@@ -30,14 +30,23 @@ jobs:
     - name: Run unit and integration tests
       run: jest "__tests__/**/*.[jt]s?(x)"
 
-    - name: Generate coverage report
+    - name: Generate code coverage report for unit and integration tests
       run: jest --coverage "__tests__/**/*.[jt]s?(x)"
 
     - name: Install Playwright browsers
       run: npx playwright install --with-deps chromium
 
-    - name: Run E2E tests
+    - name: Run E2E Tests & generate code coverage
       run: |
         npm run dev &
         npx wait-on http://localhost:3000
-        npx playwright test
+        npx playwright test --coverage
+        npx playwright show-report
+
+    - name: Upload coverage reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-reports
+        path: |
+          coverage/
+          playwright-report/
