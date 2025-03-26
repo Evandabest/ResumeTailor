@@ -23,7 +23,10 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps --force
+    
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
       
       - name: Run unit tests
         run: npm run test
@@ -32,7 +35,7 @@ jobs:
         run: npm run test:integration
       
       - name: Upload test coverage reports
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage-reports
           path: frontend/coverage
@@ -54,7 +57,7 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       
       - name: Install dependencies
-        run: npm ci
+        run: npm install --legacy-peer-deps
       
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
@@ -75,7 +78,7 @@ jobs:
         run: npx playwright test
       
       - name: Upload Playwright report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: playwright-report
