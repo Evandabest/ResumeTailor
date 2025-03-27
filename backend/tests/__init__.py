@@ -3,6 +3,9 @@ This acts as the "utils.py" for test.py, as I don't want to clutter up the "test
 """
 
 import sys, functools, ast, collections, inspect, pathlib
+import pytest
+
+from ..app import *
 
 @functools.cache
 def get_all_asserts(filename):
@@ -55,3 +58,15 @@ def ignore_asserts(f): #None of this would be needed if Python just supported (s
         
         return result
     return wrapper
+
+@pytest.fixture(scope="module")
+def client():
+
+    app.config.update({"TESTING": True})
+
+    with app.test_client() as client:
+        yield client
+
+        teardown=inspect.currentframe().f_back.f_globals.get("teardown")
+        if teardown is not None:
+            teardown(client)
