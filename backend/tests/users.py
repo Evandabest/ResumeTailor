@@ -2,7 +2,7 @@ from . import *
 
 def teardown(client):
     ignore_asserts(test_delete_users)(client)
-    
+
 email1="test1@test.com"
 email2="test2@test.com"
 

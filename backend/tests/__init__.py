@@ -65,6 +65,9 @@ def client():
     app.config.update({"TESTING": True})
 
     with app.test_client() as client:
+        setup=inspect.currentframe().f_back.f_globals.get("setup")
+        if setup is not None:
+            setup(client)
         yield client
 
         teardown=inspect.currentframe().f_back.f_globals.get("teardown")
