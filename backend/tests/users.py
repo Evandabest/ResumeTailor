@@ -1,20 +1,8 @@
-import pytest
+from . import *
 
-from ..app import *
-
-from . import ignore_asserts
-
-@pytest.fixture(scope="module")
-def client():
-
-    app.config.update({"TESTING": True})
-
-    with app.test_client() as client:
-        yield client
-
-        
-        ignore_asserts(test_delete_users)(client)
-
+def teardown(client):
+    ignore_asserts(test_delete_users)(client)
+    
 email1="test1@test.com"
 email2="test2@test.com"
 
