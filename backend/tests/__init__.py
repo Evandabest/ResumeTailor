@@ -60,16 +60,17 @@ def ignore_asserts(f): #None of this would be needed if Python just supported (s
     return wrapper
 
 @pytest.fixture(scope="module")
-def client():
-
+def client(request):
+    mod=request.module
     app.config.update({"TESTING": True})
 
     with app.test_client() as client:
-        setup=inspect.currentframe().f_back.f_globals.get("setup")
+        setup=getattr(mod, "setup", None)
         if setup is not None:
             setup(client)
+
         yield client
 
-        teardown=inspect.currentframe().f_back.f_globals.get("teardown")
+        teardown=getattr(mod, "teardown", None)
         if teardown is not None:
             teardown(client)
