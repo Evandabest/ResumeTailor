@@ -13,7 +13,7 @@ def setup(client):
 
 def test_link_valid(client):
     #Assumes token is valid
-    print(client.post("/github/link", json=credentials).json)
+    print(client.post("/github/link", json=credentials | {"code": config["TEST_USER_TOKEN"]}).json)
 
     
     

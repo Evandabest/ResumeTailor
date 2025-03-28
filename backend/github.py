@@ -1,7 +1,7 @@
 from .utils import *
 
-@endpoint("/github/link", [], outputs=["url"])
+@endpoint("/github/link", ["code"])
 def link():
-    User.auth.set_session(token, "None") #Works as long as the token doesn't expire by the time we run link_identity
-    response=User.auth.link_identity({"provider": "github", "scopes":"repo"})
-    url=response.url
+    #Code must be a GitHub token with at least read access to repositories (you can decide which repos to leave out by using the Fine-grained PAT page) 
+    User.table("user_to_token").upsert({"id": get_id_from_token(token), "token": code}).execute()
+

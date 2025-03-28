@@ -121,3 +121,6 @@ def endpoint(endpoint, parameters, outputs=None):
             
         return wrapper
     return decorator
+
+def get_id_from_token(token):
+    return User.auth.get_user(token).user.id
