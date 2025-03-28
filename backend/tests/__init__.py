@@ -74,3 +74,31 @@ def client(request):
         teardown=getattr(mod, "teardown", None)
         if teardown is not None:
             teardown(client)
+
+def is_error(response):
+
+    assert response.status_code == 500
+
+    response=response.json
+    
+    #We don't check that the error is from gotrue, as we may want to add our own custom errors later
+    assert response is not None
+
+    for key in ["error", "message"]:
+        assert response.get(key, "") != ""
+        pass
+
+
+def is_success(response):  #Similar to Rust's unwrap
+
+    assert response.status_code == 200
+
+    response=response.json
+
+    assert response is not None
+
+    for key in ["error", "message"]:
+        assert response.get(key, "") == ""
+
+    return response
+
