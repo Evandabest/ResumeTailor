@@ -33,18 +33,6 @@ def test_link_update(client):
     
     is_success(client.post("/github/link", json=credentials | {"code": config["TEST_USER_TOKEN"]}))
 
-def test_unlink(client):
-    is_success(client.post("/github/unlink", json=credentials))
-
-    pass
-
-def test_token_blank(client):
-    """
-    If a user tries to view their token after unlinking it, they should get an empty string
-    """
-
-    assert is_success(client.post("/github/token", json=credentials))["code"]==""
-
 repos=[]
 def test_list_projects(client):
     global repos
@@ -68,13 +56,16 @@ def test_import_projects_invalid(client):
     If a user tries to import a repo that they do not own, or does not exist, it should fail
     """
     for repos in [["kubernetes/kubernetes"], ["fhgidfgfudfb"]]:
-        assert is_error(client.post("/github/projects/import", json=credentials| {"repos": repos}))
+        is_error(client.post("/github/projects/import", json=credentials| {"repos": repos}))
 
+def test_unlink(client):
+    is_success(client.post("/github/unlink", json=credentials))
 
+    pass
 
+def test_token_blank(client):
+    """
+    If a user tries to view their token after unlinking it, they should get an empty string
+    """
 
-    
-    
-
-
-
+    assert is_success(client.post("/github/token", json=credentials))["code"]==""

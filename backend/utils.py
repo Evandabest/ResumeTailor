@@ -1,7 +1,13 @@
 from supabase import *
 from flask import Flask, request, url_for
-import sys, types, traceback, functools
+import pathlib, sys, types, traceback, functools
 import dotenv, jwt, requests, sqlalchemy as sql
+
+#Move the backend/... directories to the end of sys.path to deal with path conflicts (Python should really just make relative import based purely on location, not on sys.path)
+backend_directory=pathlib.Path(__file__).parent
+backend_directories=[backend_directory, backend_directory / 'tests']
+sys.path[:]=(x for x in sys.path if pathlib.Path(x) not in backend_directories)
+sys.path.extend(list(map(str, backend_directories)))
 
 app = Flask(__name__)
 
