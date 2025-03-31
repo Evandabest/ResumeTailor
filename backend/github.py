@@ -1,8 +1,6 @@
 from .utils import *
-
 from github import Github, Auth
-
-github=Github(auth=Auth.Token(config["GITHUB_USER_TOKEN"])) #Layer
+from github.GithubException import UnknownObjectException
 
 @endpoint("/github/link", ["code"]) #Used for both linking, and updating
 def link():
@@ -50,9 +48,13 @@ def list():
         repo_iterator=[user.get_repo(repo) for repo in repos]
     else:
         #We only care about public repos (what's the point of putting a repo in your resume that no one can see?)
-        repo_iterator=(repo for repo in user.get_repos(visibility="public") if ((repo.stargazers_count >= min_stars) and ((is_archived is None) and (repo.archived==is_archived)) and (repo.name not in exclude)) or (repo in include) ) #If "is_archived" is None, then accept repos regardless of archive status. Can add other filters later
+        repo_iterator=(repo for repo in user.get_repos(visibility="public") if ((repo.stargazers_count >= min_stars) and ((is_archived is None) or (repo.archived==is_archived)) and (repo.name not in exclude)) or (repo in include) ) #If "is_archived" is None, then accept repos regardless of archive status. Can add other filters later
 
     for repo in repo_iterator:
+        try: #Check if repository has readme
+            repo.get_readme()
+        except UnknownObjectException:
+            continue
         repos.append({"name": repo.name, "url": repo.html_url}) 
         
 @endpoint("/github/projects/import", ["repos"]) #Used for updating the projects import. Takes in a non-empty list of repo names
@@ -66,7 +68,7 @@ def _import():
     data=[]
     for repo in repos:
         repo=user.get_repo(repo)
-        info={"name": repo.name, "stars": repo.stargazers_count, "topics": repo.topics, "description": repo.description, "readme": repo.get_readme().decoded_content.decode()}
+        info={"id": uid, "name": repo.name, "stars": repo.stargazers_count, "topics": repo.topics, "description": repo.description, "readme": repo.get_readme().decoded_content.decode()}
 
         languages=repo.get_languages()
         langs=[]
