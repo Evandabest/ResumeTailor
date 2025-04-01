@@ -8,10 +8,10 @@
     "start": "next start",
     "lint": "next lint",
     "test": "jest",
-    "test:integration": "jest --testMatch='**/*.integration.test.{ts,tsx}'",
+    "test:integration": "jest --testMatch='**/*.integration.test.{ts/js,tsx}'",
     "test:coverage": "jest --coverage",
     "codecov": "codecov",
-    "test-play": "playwright test"
+    "test:e2e": "npx playwright test"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
