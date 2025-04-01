@@ -136,7 +136,7 @@ export default function DashboardPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600 mt-1">Welcome back! Here's an overview of your resume tailoring progress.</p>
+          <p className="text-gray-600 mt-1">{`Welcome back! Here's an overview of your resume tailoring progress.`}</p>
         </div>
         <Button className="mt-4 md:mt-0 bg-blue-700 hover:bg-blue-800">
           <FaPlus className="mr-2" /> New Resume
