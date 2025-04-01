@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { FaGithub, FaFileAlt, FaRobot, FaSearch, FaEdit, FaUpload, FaLink } from 'react-icons/fa';
 
 export default function Home() {
