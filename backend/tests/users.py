@@ -1,19 +1,7 @@
-import pytest
+from . import *
 
-from ..app import *
-
-from . import ignore_asserts
-
-@pytest.fixture(scope="module")
-def client():
-
-    app.config.update({"TESTING": True})
-
-    with app.test_client() as client:
-        yield client
-
-        
-        ignore_asserts(test_delete_users)(client)
+def teardown(client):
+    ignore_asserts(test_delete_users)(client)
 
 email1="test1@test.com"
 email2="test2@test.com"
@@ -27,32 +15,6 @@ user2=[email2, password2]
 
 token=""
 
-def is_error(response):
-
-    assert response.status_code == 500
-
-    response=response.json
-    
-    #We don't check that the error is from gotrue, as we may want to add our own custom errors later
-    assert response is not None
-
-    for key in ["error", "message"]:
-        assert response.get(key, "") != ""
-        pass
-
-
-def is_success(response):  #Similar to Rust's unwrap
-
-    assert response.status_code == 200
-
-    response=response.json
-
-    assert response is not None
-
-    for key in ["error", "message"]:
-        assert response.get(key, "") == ""
-
-    return response
 
 def test_signup_invalid_credentials(client):
     """

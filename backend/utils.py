@@ -1,8 +1,14 @@
 from supabase import *
 from flask import Flask, request, url_for
-import sys, types, traceback, functools
+import pathlib, sys, types, traceback, functools
 import dotenv, jwt, requests, sqlalchemy as sql
 import os
+
+#Move the backend/... directories to the end of sys.path to deal with path conflicts (Python should really just make relative import based purely on location, not on sys.path)
+backend_directory=pathlib.Path(__file__).parent
+backend_directories=[backend_directory, backend_directory / 'tests']
+sys.path[:]=(x for x in sys.path if pathlib.Path(x) not in backend_directories)
+sys.path.extend(list(map(str, backend_directories)))
 
 app = Flask(__name__)
 
@@ -125,7 +131,8 @@ def endpoint(endpoint, parameters, outputs=None):
                     except:
                         raise StaleTokenError
                     else:
-                        session_id=jwt.decode(token, config["SUPABASE_JWT_SECRET"], algorithms=["HS256"], options={"verify_signature": False})["session_id"]
+
+                        session_id=jwt.decode(token, config["SUPABASE_JWT_SECRET"], algorithms=["HS256"], options={"verify_signature": True, "verify_aud":False, "verify_iss":False, "verify_exp": False, "verify_iat": False, "verify_nbf": False})["session_id"]
 
                         with engine.connect() as connection:
                             if connection.execute(sql.text("SELECT id FROM auth.sessions WHERE id = :id LIMIT 1"), {"id": session_id}).first() is None:
@@ -150,3 +157,7 @@ def endpoint(endpoint, parameters, outputs=None):
             
         return wrapper
     return decorator
+
+
+def get_id_from_token(token):
+    return User.auth.get_user(token).user.id
