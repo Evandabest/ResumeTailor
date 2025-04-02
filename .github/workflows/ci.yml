@@ -7,6 +7,35 @@ on:
     branches: [ main ]
 
 jobs:
+  secrets-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check required secrets
+        run: |
+          echo "Checking required secrets..."
+          
+          # Check Supabase secrets (these are causing your test failures)
+          [ -z "${{ secrets.SUPABASE_URL }}" ] && echo "❌ SUPABASE_URL is missing" || echo "✅ SUPABASE_URL is set"
+          [ -z "${{ secrets.SUPABASE_USER_KEY }}" ] && echo "❌ SUPABASE_USER_KEY is missing" || echo "✅ SUPABASE_USER_KEY is set"
+          [ -z "${{ secrets.SUPABASE_ADMIN_KEY }}" ] && echo "❌ SUPABASE_ADMIN_KEY is missing" || echo "✅ SUPABASE_ADMIN_KEY is set"
+          [ -z "${{ secrets.SUPABASE_JWT_SECRET }}" ] && echo "❌ SUPABASE_JWT_SECRET is missing" || echo "✅ SUPABASE_JWT_SECRET is set"
+          
+          # Check database secrets
+          [ -z "${{ secrets.SUPABASE_PSQL_USER }}" ] && echo "❌ SUPABASE_PSQL_USER is missing" || echo "✅ SUPABASE_PSQL_USER is set"
+          [ -z "${{ secrets.SUPABASE_PSQL_PASSWORD }}" ] && echo "❌ SUPABASE_PSQL_PASSWORD is missing" || echo "✅ SUPABASE_PSQL_PASSWORD is set"
+          [ -z "${{ secrets.SUPABASE_PSQL_HOST }}" ] && echo "❌ SUPABASE_PSQL_HOST is missing" || echo "✅ SUPABASE_PSQL_HOST is set"
+          [ -z "${{ secrets.SUPABASE_PSQL_PORT }}" ] && echo "❌ SUPABASE_PSQL_PORT is missing" || echo "✅ SUPABASE_PSQL_PORT is set"
+          [ -z "${{ secrets.SUPABASE_PSQL_DBNAME }}" ] && echo "❌ SUPABASE_PSQL_DBNAME is missing" || echo "✅ SUPABASE_PSQL_DBNAME is set"
+          
+          # Check GitHub OAuth secrets
+          [ -z "${{ secrets.NEXT_GITHUB_CLIENT_ID }}" ] && echo "❌ NEXT_GITHUB_CLIENT_ID is missing" || echo "✅ NEXT_GITHUB_CLIENT_ID is set"
+          [ -z "${{ secrets.NEXT_GITHUB_CLIENT_SECRET }}" ] && echo "❌ NEXT_GITHUB_CLIENT_SECRET is missing" || echo "✅ NEXT_GITHUB_CLIENT_SECRET is set"
+          
+          # Fail if any required secret is missing
+          if [ -z "${{ secrets.SUPABASE_URL }}" ] || [ -z "${{ secrets.SUPABASE_USER_KEY }}" ]; then
+            echo "Required secrets missing! Please add them in GitHub repository settings."
+            exit 1
+          fi
   backend-tests:
     runs-on: ubuntu-latest
     env:
