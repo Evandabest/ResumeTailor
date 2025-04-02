@@ -32,7 +32,7 @@ jobs:
         run: npm run test
       
       - name: Run integration tests
-        run: npm run test:integration || echo "Integration tests failed but continuing"
+        run: npm run test:integration
       
       - name: Upload test coverage reports
         uses: actions/upload-artifact@v4
@@ -57,7 +57,7 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       
       - name: Install dependencies
-        run: npm install --legacy-peer-deps
+        run: npm ci --legacy-peer-deps
       
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
@@ -67,7 +67,6 @@ jobs:
       
       - name: Start the app
         run: npm run start & 
-        # Run in background
       
       - name: Wait for app to start
         run: |
@@ -75,7 +74,9 @@ jobs:
           timeout 60s bash -c 'until nc -z localhost 3000; do sleep 1; done' || exit 1
       
       - name: Run Playwright tests
-        run: npx playwright test
+        run: PLAYWRIGHT_HTML_REPORT=playwright-report npx playwright test
+        env:
+          CI: true
       
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
