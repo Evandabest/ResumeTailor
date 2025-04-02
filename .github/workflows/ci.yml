@@ -9,22 +9,22 @@ on:
 jobs:
   backend-tests:
     runs-on: ubuntu-latest
+    env:
+      NEXT_GITHUB_CLIENT_ID: ${{ secrets.NEXT_GITHUB_CLIENT_ID }}
+      NEXT_GITHUB_CLIENT_SECRET: ${{ secrets.NEXT_GITHUB_CLIENT_SECRET }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_USER_KEY: ${{ secrets.SUPABASE_USER_KEY }}
+      SUPABASE_ADMIN_KEY: ${{ secrets.SUPABASE_ADMIN_KEY }}
+      SUPABASE_JWT_SECRET: ${{ secrets.SUPABASE_JWT_SECRET }}
+      SUPABASE_PSQL_USER: ${{ secrets.SUPABASE_PSQL_USER }}
+      SUPABASE_PSQL_PASSWORD: ${{ secrets.SUPABASE_PSQL_PASSWORD }}
+      SUPABASE_PSQL_HOST: ${{ secrets.SUPABASE_PSQL_HOST }}
+      SUPABASE_PSQL_PORT: ${{ secrets.SUPABASE_PSQL_PORT }}
+      SUPABASE_PSQL_DBNAME: ${{ secrets.SUPABASE_PSQL_DBNAME }}
+
     steps:
-    - name: Set up environment variables
-      run: |
-        echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" > .env
-        echo "SUPABASE_USER_KEY=${{ secrets.SUPABASE_USER_KEY }}" >> .env
-        echo "SUPABASE_ADMIN_KEY=${{ secrets.SUPABASE_ADMIN_KEY }}" >> .env
-        echo "SUPABASE_JWT_SECRET=${{ secrets.SUPABASE_JWT_SECRET }}" >> .env
-        echo "SUPABASE_PSQL_USER=${{ secrets.SUPABASE_PSQL_USER }}" >> .env
-        echo "SUPABASE_PSQL_PASSWORD=${{ secrets.SUPABASE_PSQL_PASSWORD }}" >> .env
-        echo "SUPABASE_PSQL_HOST=${{ secrets.SUPABASE_PSQL_HOST }}" >> .env
-        echo "SUPABASE_PSQL_PORT=${{ secrets.SUPABASE_PSQL_PORT }}" >> .env
-        echo "SUPABASE_PSQL_DBNAME=${{ secrets.SUPABASE_PSQL_DBNAME }}" >> .env
-        echo "NEXT_GITHUB_CLIENT_ID=${{ secrets.NEXT_GITHUB_CLIENT_ID }}" >> .env
-        echo "NEXT_GITHUB_CLIENT_SECRET=${{ secrets.NEXT_GITHUB_CLIENT_SECRET }}" >> .env
     - uses: actions/checkout@v4
-    
+
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
