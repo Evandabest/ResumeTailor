@@ -7,6 +7,7 @@ import pytest
 
 from ..app import *
 
+
 @functools.cache
 def get_all_asserts(filename):
     root=ast.parse(open(filename).read())

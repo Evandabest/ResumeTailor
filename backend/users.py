@@ -5,7 +5,6 @@ from .utils import *
 #We'll let users sign up without verifying email; however, to receive emails (including to reset password), they must verify it first
 @endpoint("/signup", ["email", "password"])
 def signup():
-
     user=User.auth.sign_up({"email": email, "password": password}).user
 
 
@@ -44,6 +43,7 @@ def modify():
     #response=User.auth.update_user(update_dict) #This will not work, as modifying the email of as a user REQUIRES you to validate the new email --- unlike with signing up, there is NO option available in the dashboard for you to skip this
 
     user=Admin.auth.admin.update_user_by_id(get_id_from_token(token), update_dict).user
+
 
     if email is not None:
         email=user.email

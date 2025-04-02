@@ -2,6 +2,7 @@ from supabase import *
 from flask import Flask, request, url_for
 import pathlib, sys, types, traceback, functools
 import dotenv, jwt, requests, sqlalchemy as sql
+import os
 
 #Move the backend/... directories to the end of sys.path to deal with path conflicts (Python should really just make relative import based purely on location, not on sys.path)
 backend_directory=pathlib.Path(__file__).parent
@@ -11,7 +12,35 @@ sys.path.extend(list(map(str, backend_directories)))
 
 app = Flask(__name__)
 
-config=dotenv.dotenv_values()
+# Load .env file if it exists
+dotenv.load_dotenv()
+
+# Create config dict that prioritizes environment variables over .env file
+config = {
+    "NEXT_GITHUB_CLIENT_ID": os.environ.get("NEXT_GITHUB_CLIENT_ID"),
+    "NEXT_GITHUB_CLIENT_SECRET": os.environ.get("NEXT_GITHUB_CLIENT_SECRET"),
+    "SUPABASE_URL": os.environ.get("SUPABASE_URL"),
+    "SUPABASE_USER_KEY": os.environ.get("SUPABASE_USER_KEY"),
+    "SUPABASE_ADMIN_KEY": os.environ.get("SUPABASE_ADMIN_KEY"),
+    "SUPABASE_JWT_SECRET": os.environ.get("SUPABASE_JWT_SECRET"),
+    "SUPABASE_PSQL_USER": os.environ.get("SUPABASE_PSQL_USER"),
+    "SUPABASE_PSQL_PASSWORD": os.environ.get("SUPABASE_PSQL_PASSWORD"),
+    "SUPABASE_PSQL_HOST": os.environ.get("SUPABASE_PSQL_HOST"),
+    "SUPABASE_PSQL_PORT": os.environ.get("SUPABASE_PSQL_PORT"),
+    "SUPABASE_PSQL_DBNAME": os.environ.get("SUPABASE_PSQL_DBNAME")
+}
+
+# Fall back to .env file values if environment variables not set
+env_values = dotenv.dotenv_values()
+for key in config:
+    if config[key] is None and key in env_values:
+        config[key] = env_values[key]
+
+# Validate required configuration
+missing_keys = [key for key in config if config[key] is None]
+if missing_keys:
+    raise ValueError(f"Missing required configuration: {', '.join(missing_keys)}")
+
 
 User = create_client(config["SUPABASE_URL"], config["SUPABASE_USER_KEY"])
 Admin = create_client(config["SUPABASE_URL"], config["SUPABASE_ADMIN_KEY"])
@@ -102,6 +131,7 @@ def endpoint(endpoint, parameters, outputs=None):
                     except:
                         raise StaleTokenError
                     else:
+
                         session_id=jwt.decode(token, config["SUPABASE_JWT_SECRET"], algorithms=["HS256"], options={"verify_signature": True, "verify_aud":False, "verify_iss":False, "verify_exp": False, "verify_iat": False, "verify_nbf": False})["session_id"]
 
                         with engine.connect() as connection:
@@ -127,6 +157,7 @@ def endpoint(endpoint, parameters, outputs=None):
             
         return wrapper
     return decorator
+
 
 def get_id_from_token(token):
     return User.auth.get_user(token).user.id

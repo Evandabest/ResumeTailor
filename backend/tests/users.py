@@ -15,6 +15,7 @@ user2=[email2, password2]
 
 token=""
 
+
 def test_signup_invalid_credentials(client):
     """
     If a user tries to sign up, but does not give both username and password, it should return an error.
