@@ -11,7 +11,7 @@
     "test:integration": "jest --testMatch='**/*.integration.test.{ts/js,tsx}'",
     "test:coverage": "jest --coverage",
     "codecov": "codecov",
-    "test:e2e": "npx playwright test"
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
