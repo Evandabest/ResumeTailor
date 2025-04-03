@@ -26,6 +26,15 @@ database=config["SUPABASE_PSQL_DBNAME"],
 query={"sslmode": "disable"}
 ))
 
+class Special: #Class for special arguments
+    def __init__(self, arg):
+        self.val=arg
+    def __str__(self):
+        return str(self.val)
+
+class File(Special):
+    pass
+
 class StaleTokenError(Exception):
     def __str__(self):
         return "This token has expired. Please /login or /refresh to get a new one."
@@ -85,16 +94,28 @@ def endpoint(endpoint, parameters, outputs=None):
             parameters_=parameters.copy()
 
             parameters_.append("token")
-            parameters_ = { k: request.json.get(k, None) for k in parameters_}
+
+            special_params={k: k.__class__ for k in parameters_ if not isinstance(k, str)}
+
+            parameters_map={}
+
+            for parameter in parameters_:
+                
+                if isinstance(parameter, File):
+                    val=request.files.get(parameter, None)
+                else:
+                    val=request.json.get(parameter, None)
+                
+                parameters_map[parameter]=val
             
             if outputs is None:
                 outputs_=[]
             else:
                 outputs_=outputs.copy()
             outputs_.extend(["error", "message"])
-            persistent_locals=PersistentLocals(f, parameters_)
+            persistent_locals=PersistentLocals(f, parameters_map)
             try:
-                token=parameters_["token"]
+                token=parameters_map["token"]
 
                 if (token is not None):  #https://supabase.com/docs/guides/auth/sessions#how-to-ensure-an-access-token-jwt-cannot-be-used-after-a-user-signs-out
                     try:
