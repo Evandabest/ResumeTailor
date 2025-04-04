@@ -11,6 +11,8 @@ sys.path.extend(list(map(str, backend_directories)))
 
 app = Flask(__name__)
 
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1000 * 1000 #Uploaded files must be at most 5 MB
+
 config=dotenv.dotenv_values()
 
 User = create_client(config["SUPABASE_URL"], config["SUPABASE_USER_KEY"])
