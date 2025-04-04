@@ -25,5 +25,13 @@ def delete():
 
 @endpoint("/resume/list", [], ["data"])
 def list():
-    data=table.select("instance_id->id, filename").execute().data
+    data=table.select("id:instance_id, filename").execute().data
 
+@endpoint("/resume/rename", ["id", "name"])
+def rename():
+    if not filename.endswith(".tex"):
+        raise ValueError("New name must end in '.tex'")
+
+    table.update({"filename": name}).eq("instance_id", id).execute()
+    
+    
