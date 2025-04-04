@@ -1,1 +1,5 @@
 # ResumeTailor Architecture
+
+![Component Diagram](./static/component%20digram.png)
+
+The **ResumeTailor** application consists of a **Next.js web client**, a **Flask web server**, **Supabase services**, and the **GitHub service**. The **web client** serves as the user interface, allowing users to login, view their github projects and more. It communicates with the **web server** via `https/json` API calls for backend operations like GitHub integration. The **web server** interacts with the **GitHub service** using `https/REST` to fetch user repositories and project data. For authentication, the web server uses the **Supabase Auth service** via the `supabase-py` library, while database operations are handled through **PostgreSQL** using `sqlalchemy`. Supabase internally includes the **Auth service** and the **PostgreSQL database** to manage user sessions and authentication data.
