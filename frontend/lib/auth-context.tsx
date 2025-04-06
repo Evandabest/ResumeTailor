@@ -17,28 +17,30 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userData, setUserData] = useState<UserData | null>(null);
+  // Initialize state from localStorage
+  const storedData = typeof window !== 'undefined' ? localStorage.getItem('userData') : null;
+  const initialData = storedData ? JSON.parse(storedData) : null;
+  const [isLoggedIn, setIsLoggedIn] = useState(!!initialData);
+  const [userData, setUserData] = useState<UserData | null>(initialData);
 
+  // Save userData to localStorage whenever it changes
   useEffect(() => {
-    const storedData = localStorage.getItem('userData');
-    if (storedData) {
-      const data = JSON.parse(storedData);
-      setUserData(data);
-      setIsLoggedIn(true);
+    if (userData) {
+      localStorage.setItem('userData', JSON.stringify(userData));
     }
-  }, []);
+  }, [userData]);
 
   const login = (data: UserData) => {
     setUserData(data);
     setIsLoggedIn(true);
-    localStorage.setItem('userData', JSON.stringify(data));
   };
 
   const logout = () => {
     setIsLoggedIn(false);
     setUserData(null);
-    localStorage.removeItem('userData');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('userData');
+    }
   };
 
   return (
