@@ -11,7 +11,7 @@ def link():
 
 #For internal use
 def _token(token):
-    lst=User.table("user_to_token").select("token").eq("id", get_id_from_token(token)).execute().data
+lst=User.table("user_to_token").select("token").eq("id", get_id_from_token(token)).execute().data
     if len(lst)==0:
         return ""
     else:
@@ -48,7 +48,7 @@ def list():
         repo_iterator=[user.get_repo(repo) for repo in repos]
     else:
         #We only care about public repos (what's the point of putting a repo in your resume that no one can see?)
-        repo_iterator=(repo for repo in user.get_repos(visibility="public") if ((repo.stargazers_count >= min_stars) and ((is_archived is None) or (repo.archived==is_archived)) and (repo.name not in exclude)) or (repo in include) ) #If "is_archived" is None, then accept repos regardless of archive status. Can add other filters later
+        repo_iterator=(repo for repo in user.get_repos(visibility="public", affiliation="owner") if ((repo.stargazers_count >= min_stars) and ((is_archived is None) or (repo.archived==is_archived)) and (repo.name not in exclude)) or (repo in include) ) #If "is_archived" is None, then accept repos regardless of archive status. Can add other filters later
 
     for repo in repo_iterator:
         try: #Check if repository has readme
