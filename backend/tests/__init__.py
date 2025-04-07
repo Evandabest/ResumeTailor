@@ -75,10 +75,13 @@ def client(request):
         if teardown is not None:
             teardown(client)
 
-def is_error(response):
+def is_error(response, error_code=500):
+    
+    assert (response.status_code == error_code)
 
-    assert response.status_code == 500
-
+    if error_code!=500:
+        return
+    
     response=response.json
     
     #We don't check that the error is from gotrue, as we may want to add our own custom errors later

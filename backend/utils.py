@@ -1,6 +1,6 @@
 from supabase import *
 from flask import Flask, request, url_for
-import pathlib, sys, types, traceback, functools
+import pathlib, sys, types, traceback, functools, json
 import dotenv, jwt, requests, sqlalchemy as sql
 
 #Move the backend/... directories to the end of sys.path to deal with path conflicts (Python should really just make relative import based purely on location, not on sys.path)
@@ -10,6 +10,8 @@ sys.path[:]=(x for x in sys.path if pathlib.Path(x) not in backend_directories)
 sys.path.extend(list(map(str, backend_directories)))
 
 app = Flask(__name__)
+
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1000 * 1000 #Uploaded files must be at most 5 MB
 
 config=dotenv.dotenv_values()
 
@@ -25,6 +27,15 @@ port=int(config["SUPABASE_PSQL_PORT"]),
 database=config["SUPABASE_PSQL_DBNAME"],
 query={"sslmode": "disable"}
 ))
+
+class Special: #Class for special arguments
+    def __init__(self, arg):
+        self.val=arg
+    def __str__(self):
+        return str(self.val)
+
+class File(Special):
+    pass
 
 class StaleTokenError(Exception):
     def __str__(self):
@@ -79,22 +90,41 @@ def endpoint(endpoint, parameters, outputs=None):
     """
 
     def decorator(f):
-        @app.route(endpoint, methods=["POST"])
+        
         @functools.wraps(f)
         def wrapper(*args, **kwargs):
             parameters_=parameters.copy()
 
             parameters_.append("token")
-            parameters_ = { k: request.json.get(k, None) for k in parameters_}
+
+            special_params={k: k.__class__ for k in parameters_ if not isinstance(k, str)}
+
+            parameters_map={}
+            
+            if request.is_json:
+                json_=request.json.copy()
+            else:
+                json_={}
+            
+            json_|=json.loads(request.form.get("json", "{}"))
+            for parameter in parameters_:
+                cls=parameter.__class__
+                parameter=str(parameter)
+                if cls==File:
+                    val=request.files.get(parameter, None)
+                else:
+                    val=json_.get(parameter, None)
+                
+                parameters_map[parameter]=val
             
             if outputs is None:
                 outputs_=[]
             else:
                 outputs_=outputs.copy()
             outputs_.extend(["error", "message"])
-            persistent_locals=PersistentLocals(f, parameters_)
+            persistent_locals=PersistentLocals(f, parameters_map)
             try:
-                token=parameters_["token"]
+                token=parameters_map["token"]
 
                 if (token is not None):  #https://supabase.com/docs/guides/auth/sessions#how-to-ensure-an-access-token-jwt-cannot-be-used-after-a-user-signs-out
                     try:
@@ -112,6 +142,7 @@ def endpoint(endpoint, parameters, outputs=None):
             except Exception as e:
                 persistent_locals.locals["error"]=e.__class__.__name__
                 persistent_locals.locals["message"]=str(e)
+
                 persistent_locals.locals["status_code"]=500
 
                 if app.testing:
@@ -124,7 +155,10 @@ def endpoint(endpoint, parameters, outputs=None):
                     persistent_locals.locals[key]=""
 
             return {k: persistent_locals.locals[k] for k in outputs_ if k in persistent_locals.locals}, status_code
-            
+        
+        wrapper.__name__=(f.__module__+"."+f.__name__).replace(".", "_")
+        wrapper=app.route(endpoint, methods=["POST"])(wrapper)
+        #@app.route(endpoint, methods=["POST"])
         return wrapper
     return decorator
 

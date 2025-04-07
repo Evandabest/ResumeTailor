@@ -49,8 +49,15 @@ def test_import_projects_valid(client):
     If a user tries to import their GitHub projects, it should succeed
     """
 
-    assert is_success(client.post("/github/projects/import", json=credentials | {"repos": [repo["name"] for repo in repos]}))
+    is_success(client.post("/github/projects/import", json=credentials | {"repos": [repo["name"] for repo in repos]}))
 
+def test_view_projects(client):
+    """
+    If a user tries to view their imported projects, it should succeed
+    """
+
+    assert len(is_success(client.post("/github/projects/view", json=credentials))["repos"])>0
+    
 def test_import_projects_invalid(client):
     """
     If a user tries to import a repo that they do not own, or does not exist, it should fail

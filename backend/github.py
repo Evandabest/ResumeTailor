@@ -19,7 +19,7 @@ def _token(token):
 
 #Used solely for displaying the username in the settings page
 @endpoint("/github/token", [], ["code"])
-def view():
+def view_token():
     code=_token(token)
 
 @endpoint("/github/unlink", []) #We *could* make it so that to unlink a token, you just send a blank "code" to /link
@@ -48,7 +48,7 @@ def list():
         repo_iterator=[user.get_repo(repo) for repo in repos]
     else:
         #We only care about public repos (what's the point of putting a repo in your resume that no one can see?)
-        repo_iterator=(repo for repo in user.get_repos(visibility="public") if ((repo.stargazers_count >= min_stars) and ((is_archived is None) or (repo.archived==is_archived)) and (repo.name not in exclude)) or (repo in include) ) #If "is_archived" is None, then accept repos regardless of archive status. Can add other filters later
+        repo_iterator=(repo for repo in user.get_repos(visibility="public", affiliation="owner") if ((repo.stargazers_count >= min_stars) and ((is_archived is None) or (repo.archived==is_archived)) and (repo.name not in exclude)) or (repo in include) ) #If "is_archived" is None, then accept repos regardless of archive status. Can add other filters later
 
     for repo in repo_iterator:
         try: #Check if repository has readme
@@ -68,7 +68,8 @@ def _import():
     data=[]
     for repo in repos:
         repo=user.get_repo(repo)
-        info={"id": uid, "name": repo.name, "stars": repo.stargazers_count, "topics": repo.topics, "description": repo.description, "readme": repo.get_readme().decoded_content.decode()}
+
+        info={"id": uid, "name": repo.name, "stars": repo.stargazers_count, "topics": repo.topics, "description": repo.description or "", "readme": repo.get_readme().decoded_content.decode(), "url": repo.html_url}
 
         languages=repo.get_languages()
         langs=[]
@@ -88,5 +89,9 @@ def _import():
 
     User.table("user_to_project").insert(data).execute()
 
-            
+@endpoint("/github/projects/view", [], ["repos"])
+def view():
+    repos=User.table("user_to_project").select("name, url").eq("id", get_id_from_token(token)).execute().data
+
+#/github/selection --- stores json mapping between name of project an whether it was selected. ../get can be used to retrieve it, and set will be used to, well, set it.        
 
