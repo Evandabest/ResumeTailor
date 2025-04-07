@@ -18,13 +18,17 @@ export async function POST(request: Request) {
     const result = await response.json();
 
     if (!response.ok) {
-      throw new Error(result.error || 'Request failed');
+      return NextResponse.json(
+        { error: result.message || result.error || 'Request failed' },
+        { status: response.status }
+      );
     }
 
     return NextResponse.json(result);
   } catch (error) {
+    console.error('Auth API error:', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Server error' },
+      { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
     );
   }
