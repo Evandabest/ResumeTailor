@@ -11,7 +11,7 @@ def link():
 
 #For internal use
 def _token(token):
-lst=User.table("user_to_token").select("token").eq("id", get_id_from_token(token)).execute().data
+    lst=User.table("user_to_token").select("token").eq("id", get_id_from_token(token)).execute().data
     if len(lst)==0:
         return ""
     else:

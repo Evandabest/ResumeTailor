@@ -90,7 +90,7 @@ def endpoint(endpoint, parameters, outputs=None):
     """
 
     def decorator(f):
-        @app.route(endpoint, methods=["POST"])
+        
         @functools.wraps(f)
         def wrapper(*args, **kwargs):
             parameters_=parameters.copy()
@@ -100,12 +100,17 @@ def endpoint(endpoint, parameters, outputs=None):
             special_params={k: k.__class__ for k in parameters_ if not isinstance(k, str)}
 
             parameters_map={}
-
-            json_=request.json.copy()
+            
+            if request.is_json:
+                json_=request.json.copy()
+            else:
+                json_={}
+            
             json_|=json.loads(request.form.get("json", "{}"))
             for parameter in parameters_:
-                
-                if isinstance(parameter, File):
+                cls=parameter.__class__
+                parameter=str(parameter)
+                if cls==File:
                     val=request.files.get(parameter, None)
                 else:
                     val=json_.get(parameter, None)
@@ -137,6 +142,7 @@ def endpoint(endpoint, parameters, outputs=None):
             except Exception as e:
                 persistent_locals.locals["error"]=e.__class__.__name__
                 persistent_locals.locals["message"]=str(e)
+
                 persistent_locals.locals["status_code"]=500
 
                 if app.testing:
@@ -149,7 +155,10 @@ def endpoint(endpoint, parameters, outputs=None):
                     persistent_locals.locals[key]=""
 
             return {k: persistent_locals.locals[k] for k in outputs_ if k in persistent_locals.locals}, status_code
-            
+        
+        wrapper.__name__=(f.__module__+"."+f.__name__).replace(".", "_")
+        wrapper=app.route(endpoint, methods=["POST"])(wrapper)
+        #@app.route(endpoint, methods=["POST"])
         return wrapper
     return decorator
 

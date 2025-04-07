@@ -1,5 +1,4 @@
 from .utils import *
-from werkzeug.utils import secure_filename
 import os
 import inspect
 
@@ -14,24 +13,24 @@ def validate_id(id): #Checks whether the resume referenced by the id has permiss
 
 @endpoint("/resume/upload", [File("file"), "update"])
 def upload():
-    filename= secure_filename(file.filename)
+    filename= os.path.basename(file.filename)
 
     if not filename.endswith(".tex"):
         raise ValueError("Only .tex files can be uploaded")
 
-    data={"id": get_id_from_token(token), "text": file.read().decode(), "filename": filename}
+    data={"id": get_id_from_token(token), "content": file.read().decode(), "filename": filename}
 
     if update is None:
         action=table.insert(data)
     else:
         validate_id(update)
-        action=table.upsert(data | {"instance_id": update})
+        action=table.update(data).eq("instance_id", update)
     action.execute()
 
 @endpoint("/resume/delete", ["id"])
 def delete():
     validate_id(id)
-    table.delete().eq("id", id).execute()
+    table.delete().eq("instance_id", id).execute()
 
 @endpoint("/resume/list", [], ["data"])
 def list():
@@ -39,9 +38,10 @@ def list():
 
 @endpoint("/resume/rename", ["id", "name"])
 def rename():
-    if not filename.endswith(".tex"):
+    if not name.endswith(".tex"):
         raise ValueError("New name must end in '.tex'")
+
     validate_id(id)
-    table.update({"filename": secure_filename(name)}).eq("instance_id", id).execute()
+    table.update({"filename": os.path.basename(name)}).eq("instance_id", id).execute()
     
     
