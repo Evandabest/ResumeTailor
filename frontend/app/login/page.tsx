@@ -48,7 +48,8 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Login failed');
+        setError(data.error || 'Login failed');
+        return;
       }
 
       const userData = {
@@ -58,8 +59,8 @@ export default function LoginPage() {
       login(userData);
       router.push("/dashboard")
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'An error occurred');
-      console.error("Login failed:", error)
+      console.error("Login failed:", error);
+      setError('Failed to connect to authentication service');
     } finally {
       setIsLoading(false)
     }
@@ -89,7 +90,8 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Signup failed');
+        setError(data.error || 'Signup failed');
+        return;
       }
 
       const userData = {
@@ -99,8 +101,8 @@ export default function LoginPage() {
       login(userData);
       router.push("/dashboard")
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'An error occurred');
-      console.error("Signup failed:", error)
+      console.error("Signup failed:", error);
+      setError('Failed to connect to authentication service');
     } finally {
       setIsLoading(false)
     }
