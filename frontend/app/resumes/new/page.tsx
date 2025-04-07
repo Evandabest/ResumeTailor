@@ -67,6 +67,8 @@ export default function NewResumePage() {
   });
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>(templates[0].id);
   const [isLoading, setIsLoading] = useState(false);
+  const [resumeOption, setResumeOption] = useState<"template" | "upload" | "none">("template");
+  const [uploadedResume, setUploadedResume] = useState<File | null>(null);
 
   const handleJobInputChange = (e: any) => {
     const { name, value } = e.target;
@@ -94,6 +96,20 @@ export default function NewResumePage() {
     setSelectedTemplateId(id);
   };
 
+  const handleResumeOptionChange = (value: "template" | "upload" | "none") => {
+    setResumeOption(value);
+    if (value === "none") {
+      // Set a default template or null based on your app's requirements
+      setSelectedTemplateId("minimal-modern");
+    }
+  };
+
+  const handleResumeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setUploadedResume(e.target.files[0]);
+    }
+  };
+
   const nextStep = () => {
     setCurrentStep(prev => prev + 1);
   };
@@ -105,10 +121,14 @@ export default function NewResumePage() {
   const handleCreateResume = async () => {
     setIsLoading(true);
     
-    // Mock API call to create resume
     try {
       // In a real app, this would be an API request
-      console.log("Creating resume with:", { jobDetails, templateId: selectedTemplateId });
+      console.log("Creating resume with:", { 
+        jobDetails, 
+        templateId: resumeOption === "template" ? selectedTemplateId : null,
+        uploadedResume: resumeOption === "upload" ? uploadedResume?.name : null,
+        useTemplate: resumeOption !== "none"
+      });
       
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -376,57 +396,187 @@ export default function NewResumePage() {
       {currentStep === 2 && (
         <Card>
           <CardHeader>
-            <CardTitle>Choose a Template</CardTitle>
+            <CardTitle>Choose How to Create Your Resume</CardTitle>
             <CardDescription>
-              Select a resume template that best matches the job and your style.
+              Select a template, upload your existing resume, or start from scratch.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <RadioGroup 
-              value={selectedTemplateId} 
-              onValueChange={handleTemplateSelection}
-              className="grid grid-cols-2 md:grid-cols-4 gap-6"
-            >
-              {templates.map(template => (
-                <div key={template.id} className="relative">
-                  <RadioGroupItem
-                    value={template.id}
-                    id={template.id}
-                    className="sr-only"
-                  />
-                  <Label
-                    htmlFor={template.id}
-                    className={`
-                      block cursor-pointer rounded-lg overflow-hidden border-2 transition-all
-                      ${selectedTemplateId === template.id ? 'border-blue-700 ring-2 ring-blue-700 ring-opacity-30' : 'border-gray-200 hover:border-gray-300'}
-                    `}
-                  >
-                    <div className="aspect-[3/4] bg-gray-100">
-                      <img
-                        src={template.image}
-                        alt={template.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div className="p-3">
-                      <h3 className="font-medium text-sm">
-                        {template.name}
-                      </h3>
-                      <p className="text-xs text-gray-500">
-                        {template.category}
-                      </p>
-                    </div>
-                    {selectedTemplateId === template.id && (
-                      <div className="absolute top-2 right-2 w-6 h-6 bg-blue-700 rounded-full flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                    )}
+          <CardContent className="space-y-6">
+            <div className="space-y-2">
+              <RadioGroup 
+                value={resumeOption} 
+                onValueChange={(value) => handleResumeOptionChange(value as "template" | "upload" | "none")}
+                className="space-y-3"
+              >
+                <div className="flex items-start space-x-2">
+                  <RadioGroupItem value="template" id="option-template" />
+                  <Label htmlFor="option-template" className="font-medium">
+                    Choose a template
+                    <p className="font-normal text-sm text-gray-500">
+                      Select from our professionally designed templates
+                    </p>
                   </Label>
                 </div>
-              ))}
-            </RadioGroup>
+                
+                <div className="flex items-start space-x-2">
+                  <RadioGroupItem value="upload" id="option-upload" />
+                  <Label htmlFor="option-upload" className="font-medium">
+                    Upload my existing resume
+                    <p className="font-normal text-sm text-gray-500">
+                      Use your current resume and we'll help you tailor it
+                    </p>
+                  </Label>
+                </div>
+                
+                <div className="flex items-start space-x-2">
+                  <RadioGroupItem value="none" id="option-none" />
+                  <Label htmlFor="option-none" className="font-medium">
+                    Start from scratch
+                    <p className="font-normal text-sm text-gray-500">
+                      Create a custom resume without using a template
+                    </p>
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            {resumeOption === "template" && (
+              <div className="mt-6">
+                <h3 className="text-sm font-medium mb-3">Select a Template</h3>
+                <RadioGroup 
+                  value={selectedTemplateId} 
+                  onValueChange={handleTemplateSelection}
+                  className="grid grid-cols-2 md:grid-cols-4 gap-6"
+                >
+                  {templates.map(template => (
+                    <div key={template.id} className="relative">
+                      <RadioGroupItem
+                        value={template.id}
+                        id={template.id}
+                        className="sr-only"
+                      />
+                      <Label
+                        htmlFor={template.id}
+                        className={`
+                          block cursor-pointer rounded-lg overflow-hidden border-2 transition-all
+                          ${selectedTemplateId === template.id ? 'border-blue-700 ring-2 ring-blue-700 ring-opacity-30' : 'border-gray-200 hover:border-gray-300'}
+                        `}
+                      >
+                        <div className="aspect-[3/4] bg-gray-100">
+                          <img
+                            src={template.image}
+                            alt={template.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="p-3">
+                          <h3 className="font-medium text-sm">
+                            {template.name}
+                          </h3>
+                          <p className="text-xs text-gray-500">
+                            {template.category}
+                          </p>
+                        </div>
+                        {selectedTemplateId === template.id && (
+                          <div className="absolute top-2 right-2 w-6 h-6 bg-blue-700 rounded-full flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                        )}
+                      </Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              </div>
+            )}
+
+            {resumeOption === "upload" && (
+              <div className="mt-6">
+                <div className="text-center py-10 border-2 border-dashed border-gray-200 rounded-lg">
+                  <div className="flex justify-center">
+                    <FaUpload className="text-gray-400 text-3xl mb-3" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">Upload your resume</h3>
+                  <p className="text-gray-500 mb-4">
+                    Drag and drop a PDF or Word document, or click to browse
+                  </p>
+                  <div className="space-y-4">
+                    <Button 
+                      variant="outline"
+                      onClick={() => document.getElementById('resume-upload')?.click()}
+                    >
+                      Choose File
+                    </Button>
+                    <input
+                      id="resume-upload"
+                      type="file"
+                      className="hidden"
+                      accept=".pdf,.doc,.docx"
+                      onChange={handleResumeUpload}
+                    />
+                    {uploadedResume && (
+                      <div className="text-sm font-medium text-green-600">
+                        {uploadedResume.name} uploaded successfully
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="mt-6">
+                  <h3 className="text-sm font-medium mb-3">Optional: Select a Template to Apply</h3>
+                  <p className="text-sm text-gray-500 mb-4">
+                    If you'd like to reformat your resume, choose a template below:
+                  </p>
+                  {/* Template selection options same as above */}
+                  <RadioGroup 
+                    value={selectedTemplateId} 
+                    onValueChange={handleTemplateSelection}
+                    className="grid grid-cols-2 md:grid-cols-4 gap-6"
+                  >
+                    {templates.map(template => (
+                      <div key={template.id} className="relative">
+                        <RadioGroupItem
+                          value={template.id}
+                          id={`upload-${template.id}`}
+                          className="sr-only"
+                        />
+                        <Label
+                          htmlFor={`upload-${template.id}`}
+                          className={`
+                            block cursor-pointer rounded-lg overflow-hidden border-2 transition-all
+                            ${selectedTemplateId === template.id ? 'border-blue-700 ring-2 ring-blue-700 ring-opacity-30' : 'border-gray-200 hover:border-gray-300'}
+                          `}
+                        >
+                          <div className="aspect-[3/4] bg-gray-100">
+                            <img
+                              src={template.image}
+                              alt={template.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="p-3">
+                            <h3 className="font-medium text-sm">
+                              {template.name}
+                            </h3>
+                            <p className="text-xs text-gray-500">
+                              {template.category}
+                            </p>
+                          </div>
+                          {selectedTemplateId === template.id && (
+                            <div className="absolute top-2 right-2 w-6 h-6 bg-blue-700 rounded-full flex items-center justify-center">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                          )}
+                        </Label>
+                      </div>
+                    ))}
+                  </RadioGroup>
+                </div>
+              </div>
+            )}
           </CardContent>
           <CardFooter className="flex justify-between">
             <Button
@@ -438,6 +588,7 @@ export default function NewResumePage() {
             <Button
               onClick={nextStep}
               className="bg-blue-700 hover:bg-blue-800"
+              disabled={resumeOption === "upload" && !uploadedResume}
             >
               Continue <FaArrowRight className="ml-2" />
             </Button>
@@ -477,26 +628,50 @@ export default function NewResumePage() {
                 </div>
                 
                 <div className="space-y-4">
-                  <h3 className="font-medium text-gray-900">Selected Template</h3>
-                  <div className="flex items-center space-x-4">
-                    <div className="w-24">
-                      <img
-                        src={templates.find(t => t.id === selectedTemplateId)?.image}
-                        alt="Template Preview"
-                        className="w-full rounded border border-gray-200"
-                      />
-                    </div>
-                    <div>
-                      <p className="font-medium">{templates.find(t => t.id === selectedTemplateId)?.name}</p>
-                      <p className="text-sm text-gray-500">{templates.find(t => t.id === selectedTemplateId)?.category}</p>
-                    </div>
+                  <h3 className="font-medium text-gray-900">Resume Creation Method</h3>
+                  <div className="bg-gray-50 p-4 rounded-md">
+                    {resumeOption === "template" && (
+                      <>
+                        <p><strong>Method:</strong> Using template</p>
+                        <div className="flex items-center space-x-4 mt-2">
+                          <div className="w-24">
+                            <img
+                              src={templates.find(t => t.id === selectedTemplateId)?.image}
+                              alt="Template Preview"
+                              className="w-full rounded border border-gray-200"
+                            />
+                          </div>
+                          <div>
+                            <p className="font-medium">{templates.find(t => t.id === selectedTemplateId)?.name}</p>
+                            <p className="text-sm text-gray-500">{templates.find(t => t.id === selectedTemplateId)?.category}</p>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                    
+                    {resumeOption === "upload" && (
+                      <>
+                        <p><strong>Method:</strong> Uploaded existing resume</p>
+                        {uploadedResume && <p className="mt-1"><strong>File:</strong> {uploadedResume.name}</p>}
+                        
+                        {selectedTemplateId && (
+                          <div className="mt-3">
+                            <p><strong>Template:</strong> {templates.find(t => t.id === selectedTemplateId)?.name}</p>
+                          </div>
+                        )}
+                      </>
+                    )}
+                    
+                    {resumeOption === "none" && (
+                      <p><strong>Method:</strong> Starting from scratch without a template</p>
+                    )}
                   </div>
                   <Button
                     variant="link"
                     className="p-0 h-auto text-blue-700"
                     onClick={() => setCurrentStep(2)}
                   >
-                    Change template
+                    Change method
                   </Button>
                 </div>
               </div>
