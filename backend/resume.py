@@ -42,6 +42,6 @@ def rename():
     if not filename.endswith(".tex"):
         raise ValueError("New name must end in '.tex'")
     validate_id(id)
-    table.update({"filename": name}).eq("instance_id", id).execute()
+    table.update({"filename": secure_filename(name)}).eq("instance_id", id).execute()
     
     
