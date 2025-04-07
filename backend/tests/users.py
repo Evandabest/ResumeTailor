@@ -17,7 +17,7 @@ token=""
 
 def test_signup_invalid_credentials(client):
     """
-    If a user tries to sign up, but does not give both username and password, it should return an error.
+    If a user tries to sign up, but does not give both username and password, it should fail.
     """
     for user in [("", "" ), (email1, ""), ("", password1)]:
         is_error(client.post("/signup", json={"email": user[0], "password": user[1]}))
