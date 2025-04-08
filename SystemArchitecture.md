@@ -1,0 +1,13 @@
+# ResumeTailor Architecture
+
+![Component Diagram](./static/component%20digram.png)
+
+The **ResumeTailor** application consists of a **Next.js web client**, a **Flask web server**, **Supabase services**, and the **GitHub service**. The **web client** serves as the user interface, allowing users to login, view their github projects and more. It communicates with the **web server** via `https/json` API calls for backend operations like GitHub integration. The **web server** interacts with the **GitHub service** using `https/REST` to fetch user repositories and project data. For authentication, the web server uses the **Supabase Auth service** via the `supabase-py` library, while database operations are handled through **PostgreSQL** using `sqlalchemy`. Supabase internally includes the **Auth service** and the **PostgreSQL database** to manage user sessions and authentication data.
+
+![Entity Relationshop Diagram](./static/entity%20relationship%20diagram.png)
+
+The database schema consists of several entities that manage user authentication, projects, resumes, and tokens. The **`auth.users`** table stores user information, including their unique `id` and `email`, and is linked to the **`auth.sessions`** table, which tracks active user sessions via the `user_id` foreign key, it is important to note that these tables are handled by Supabase and read-only. The **`public.user_to_project`** table associates users with their GitHub projects, storing details like `name`, `stars`, `topics`, and `languages`. Similarly, the **`public.user_to_resume`** table links users to their resumes, storing the resume `text` and `filename`. The **`public.user_to_token`** table manages tokens for external integrations, such as GitHub, with each token linked to a user via the `id` foreign key.
+
+![Call Sequence Diagram](./static/call%20sequence%20diagram.png)
+
+The **Signup** feature begins with the **Browser Client** sending a `POST` request to the Flask server's `/signup` endpoint, containing the user's email and password. The **Flask Server** processes the request and uses the `supabase-py` library to call the **Supabase Auth Service**, which creates a new user by inserting their details into the `auth.users` table in the **PostgreSQL Database**. Once the user is successfully created, the **PostgreSQL Database** sends a confirmation to **Supabase Auth**, which then returns the created user object to the **Flask Server**. Finally, the **Flask Server** responds to the **Browser Client** with a success message, completing the signup process.
