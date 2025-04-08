@@ -13,8 +13,8 @@ For persistent storage and queries, the application connects to a PostgreSQL dat
 ---
 
 ## Entity Relationship Diagram
+![Entity Diagram](./ER%20Dia.jpg)
 
-![Entity Diagram](./Er%20Dia.jpg)
 
 This entity relationship diagram outlines the database structure used by Resume Tailor. The `auth_users` table sits at the center of the schema, linking to user-specific resources.
 `auth_sessions` connects via `user_id` to track active sessions. Other tables — `public_user_to_resume`, `public_user_to_token`, and `public_user_to_project` — connect through `instance_id`, 
