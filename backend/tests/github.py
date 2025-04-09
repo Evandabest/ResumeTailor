@@ -23,11 +23,11 @@ def test_update_and_view(client):
 
     for value in ["1", ""]:
         for col in columns:
-            is_success(client.post("/user_to_token/update", json=credentials | {"role": col, "value": value}))
+            is_success(client.post("/user_to_token/update", json=credentials | {"column": col, "value": value}))
             
-            assert is_success(client.post("/user_to_token/view", json=credentials | {"role": col}))["value"] == value
+            assert is_success(client.post("/user_to_token/view", json=credentials | {"column": col}))["value"] == value
 
-    is_success(client.post("/user_to_token/update", json=credentials |{ "role": "github", "value": config["TEST_USER_GITHUB_TOKEN"]}))
+    is_success(client.post("/user_to_token/update", json=credentials |{ "column": "github", "value": config["TEST_USER_GITHUB_TOKEN"]}))
 
     pass
 

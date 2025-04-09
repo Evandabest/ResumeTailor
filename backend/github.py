@@ -2,6 +2,7 @@ from .utils import *
 from github import Github, Auth
 from github.GithubException import UnknownObjectException
 from github.NamedUser import NamedUser
+from github.GithubObject import NotSet
 
 user_to_token_table=User.table("user_to_token")
 @endpoint("/user_to_token/update", ["value", "column"]) #Used for linking, updating, and unlinking
@@ -27,7 +28,8 @@ def view():
 
 def get_github_user_from_token(token):
     _token=retrieve(token, "github")
-    _username=None
+
+    _username=NotSet
     if not _token:
         _token=config["TEST_USER_GITHUB_TOKEN"]
         _username=retrieve(token, "github_username")
