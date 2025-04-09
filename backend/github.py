@@ -1,35 +1,48 @@
 from .utils import *
 from github import Github, Auth
 from github.GithubException import UnknownObjectException
+from github.NamedUser import NamedUser
 
-@endpoint("/github/link", ["code"]) #Used for both linking, and updating
+user_to_token_table=User.table("user_to_token")
+@endpoint("/user_to_token/update", ["value", "column"]) #Used for linking, updating, and unlinking
 def link():
-    #Token must be a GitHub token with at least read access to public repositories 
+    #GitHub token must have at least read access to public repositories 
     #Assumes token is valid
-
-    User.table("user_to_token").upsert({"id": get_id_from_token(token), "token": code}).execute()
+    if value=="":
+        value=None
+    user_to_token_table.upsert({"id": get_id_from_token(token), column: value}).execute()
 
 #For internal use
-def _token(token):
-    lst=User.table("user_to_token").select("token").eq("id", get_id_from_token(token)).execute().data
+def retrieve(token, column):
+    lst=user_to_token_table.select(column).eq("id", get_id_from_token(token)).execute().data
     if len(lst)==0:
-        return ""
+        return None
     else:
-        return lst[0]["token"]
+        return lst[0][column]
 
 #Used solely for displaying the username in the settings page
-@endpoint("/github/token", [], ["code"])
-def view_token():
-    code=_token(token)
+@endpoint("/user_to_token/view", ["column"], ["value"])
+def view():
+    value=retrieve(token, column) or ""
 
-@endpoint("/github/unlink", []) #We *could* make it so that to unlink a token, you just send a blank "code" to /link
-def unlink():
-    User.table("user_to_token").delete().eq("id", get_id_from_token(token)).execute()
-    
+def get_github_user_from_token(token):
+    _token=retrieve(token, "github")
+    _username=None
+    if not _token:
+        _token=config["TEST_USER_GITHUB_TOKEN"]
+        _username=retrieve(token, "github_username")
+
+    return Github(auth=Auth.Token(_token)).get_user(_username)
+
 @endpoint("/github/projects/list", ["min_stars", "is_archived", "include", "exclude", "only"], ["repos"])
 def list():
     repos=[]
-    user=Github(auth=Auth.Token(_token(token))).get_user()
+
+    user=get_github_user_from_token(token)
+
+    _visibility="public"
+    if isinstance(user, NamedUser):
+        _visibility=None
 
     if min_stars is None:
         min_stars = 0
@@ -48,7 +61,7 @@ def list():
         repo_iterator=[user.get_repo(repo) for repo in repos]
     else:
         #We only care about public repos (what's the point of putting a repo in your resume that no one can see?)
-        repo_iterator=(repo for repo in user.get_repos(visibility="public", affiliation="owner") if ((repo.stargazers_count >= min_stars) and ((is_archived is None) or (repo.archived==is_archived)) and (repo.name not in exclude)) or (repo in include) ) #If "is_archived" is None, then accept repos regardless of archive status. Can add other filters later
+        repo_iterator=(repo for repo in user.get_repos(visibility=_visibility, affiliation="owner") if ((repo.stargazers_count >= min_stars) and ((is_archived is None) or (repo.archived==is_archived)) and (repo.name not in exclude)) or (repo in include) ) #If "is_archived" is None, then accept repos regardless of archive status. Can add other filters later
 
     for repo in repo_iterator:
         try: #Check if repository has readme
@@ -63,7 +76,7 @@ def _import():
 
     User.table("user_to_project").delete().eq("id", uid).execute() #Clear all projects associated with the user
 
-    user=Github(auth=Auth.Token(_token(token))).get_user()
+    user=get_github_user_from_token(token)
     
     data=[]
     for repo in repos:
@@ -90,8 +103,20 @@ def _import():
     User.table("user_to_project").insert(data).execute()
 
 @endpoint("/github/projects/view", [], ["repos"])
-def view():
+def view_projects():
     repos=User.table("user_to_project").select("name, url").eq("id", get_id_from_token(token)).execute().data
 
-#/github/selection --- stores json mapping between name of project an whether it was selected. ../get can be used to retrieve it, and set will be used to, well, set it.        
+#/github/selection --- stores JSON mapping between name of project and whether it was selected on the frontend during project import. /get can be used to retrieve it, and /set can be used to, well, set it.
+@endpoint("/github/selection/set", ["data"])
+def _set():
+    User.table("user_to_selection").upsert({"id": get_id_from_token(token), "data": data}).execute()
+
+@endpoint("/github/selection/get", [], ["data"])
+def _get():
+    data=User.table("user_to_selection").select("data").eq("id", get_id_from_token(token)).execute().data
+
+    if len(data)==0:
+        data={}
+    else:
+        data=data[0]["data"]
 
