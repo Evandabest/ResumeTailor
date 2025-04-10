@@ -1,8 +1,12 @@
 from .utils import *
+
 from github import Github, Auth
 from github.GithubException import UnknownObjectException
 from github.NamedUser import NamedUser
 from github.GithubObject import NotSet
+
+import google
+from google.genai.types import EmbedContentConfig
 
 user_to_token_table=User.table("user_to_token")
 @endpoint("/user_to_token/update", ["value", "column"]) #Used for linking, updating, and unlinking
@@ -28,8 +32,8 @@ def view():
 
 def get_github_user_from_token(token):
     _token=retrieve(token, "github")
-
     _username=NotSet
+
     if not _token:
         _token=config["TEST_USER_GITHUB_TOKEN"]
         _username=retrieve(token, "github_username")
@@ -81,6 +85,8 @@ def _import():
     user=get_github_user_from_token(token)
     
     data=[]
+    embedding_inputs=[] #The texts that will be passed into Gemini's embedding model
+
     for repo in repos:
         repo=user.get_repo(repo)
 
@@ -100,7 +106,26 @@ def _import():
 
         info["languages"]=langs
 
+        embedding_inputs.append("\n\n".join([f"{key}: {val}" for key, val in info.items() if key not in ["id", "url"]])) #We can also do some kind of truncation, or summarization beforehand to avoid Gemini potentially rejecting inputs
+
         data.append(info)
+    
+    _token=retrieve(token, "gemini")
+    if not _token:
+        _token=config["TEST_USER_GEMINI_TOKEN"]
+        
+    gemini=google.genai.Client(api_key=_token)
+    embeddings=gemini.models.embed_content(
+        model="text-embedding-004",
+        conents=embedding_inputs, 
+        config=EmbedContentConfig(task_type="SEMANTIC_SIMILARITY")
+    ).embeddings
+
+    data=[data[i] | {"embedding": embeddings[i].values} for i in range(len(embeddings))] #Merge them back together
+
+    """
+    The text in each row of user_to_project will be combined to create a single text. Each project will be "<column_name>: <str(value)>" concatenated into a single string. Use gemini embeddings (https://ai.google.dev/gemini-api/docs/embeddings), and follow this: https://supabase.com/docs/guides/ai/semantic-search#semantic-search-in-postgres (try gte-small as well). Vectors are stored alongside the project
+    """
 
     User.table("user_to_project").insert(data).execute()
 
