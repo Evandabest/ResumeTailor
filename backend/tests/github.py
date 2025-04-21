@@ -4,6 +4,7 @@ email=config["TEST_USER_EMAIL"]
 password=config["TEST_USER_PASSWORD"]
 
 credentials={"email": email, "password": password} 
+
 def setup(client):
     global credentials
     client.post("/signup", json=credentials)
@@ -11,27 +12,22 @@ def setup(client):
 
     credentials={"token": token}
 
-def teardown(client):
-    ignore_asserts(test_unlink)(client)
+def test_update_and_view(client):
+    """
+    A. If a user tries to add or update a column in the user_to_token table, it should succeed.
 
-def test_link(client):
-    is_success(client.post("/github/link", json=credentials | {"code": config["TEST_USER_TOKEN"]}))
+    B. If a user tries to view the updated value(s), it should succeed.
+    """
+
+    for value in ["1", ""]:
+        for col in ["github", "github_username"]:
+            is_success(client.post("/user_to_token/update", json=credentials | {"column": col, "value": value}))
+            
+            assert is_success(client.post("/user_to_token/view", json=credentials | {"column": col}))["value"] == value
+
+    is_success(client.post("/user_to_token/update", json=credentials |{ "column": "github", "value": config["TEST_USER_GITHUB_TOKEN"]}))
 
     pass
-
-def test_token(client):
-    assert is_success(client.post("/github/token", json=credentials))["code"]==config["TEST_USER_TOKEN"]
-
-def test_link_update(client):
-    """
-    If a user tries to update their token, it should succeed
-    """
-
-    is_success(client.post("/github/link", json=credentials | {"code": "Testing123"}))
-
-    assert is_success(client.post("/github/token", json=credentials))["code"]=="Testing123"
-    
-    is_success(client.post("/github/link", json=credentials | {"code": config["TEST_USER_TOKEN"]}))
 
 repos=[]
 def test_list_projects(client):
@@ -65,14 +61,11 @@ def test_import_projects_invalid(client):
     for repos in [["kubernetes/kubernetes"], ["fhgidfgfudfb"]]:
         is_error(client.post("/github/projects/import", json=credentials| {"repos": repos}))
 
-def test_unlink(client):
-    is_success(client.post("/github/unlink", json=credentials))
-
-    pass
-
-def test_token_blank(client):
+def test_selection_set_and_get(client):
     """
-    If a user tries to view their token after unlinking it, they should get an empty string
+    A. If a user tries to set a selection dictionary, it should succeed.
+
+    B. If a user tries to retrieve the selection dictionary, it should succeed.
     """
 
-    assert is_success(client.post("/github/token", json=credentials))["code"]==""
+    data={"linux": True}
