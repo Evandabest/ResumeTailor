@@ -5,8 +5,6 @@ password=config["TEST_USER_PASSWORD"]
 
 credentials={"email": email, "password": password} 
 
-columns=["github", "github_username"]
-
 def setup(client):
     global credentials
     client.post("/signup", json=credentials)
@@ -22,7 +20,7 @@ def test_update_and_view(client):
     """
 
     for value in ["1", ""]:
-        for col in columns:
+        for col in ["github", "github_username"]:
             is_success(client.post("/user_to_token/update", json=credentials | {"column": col, "value": value}))
             
             assert is_success(client.post("/user_to_token/view", json=credentials | {"column": col}))["value"] == value
