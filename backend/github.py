@@ -80,8 +80,6 @@ def list():
 def _import():
     uid=get_id_from_token(token)
 
-    User.table("user_to_project").delete().eq("id", uid).execute() #Clear all projects associated with the user
-
     user=get_github_user_from_token(token)
     
     data=[]
@@ -105,7 +103,7 @@ def _import():
 
         info["languages"]=langs
 
-        data.append("\n\n".join([f"{key}: {val}" for key, val in info.items()]))  #We can do some kind of additional truncation, or summarization beforehand to avoid Gemini potentially rejecting inputs
+        data.append({"name": info["name"], "url": repo.html_url, "text": "\n\n".join([f"{key}: {val}" for key, val in info.items()])})  #We can do some kind of additional truncation, or summarization beforehand to avoid Gemini potentially rejecting inputs
 
     _token=retrieve(token, "gemini")
     if not _token:
@@ -114,15 +112,17 @@ def _import():
     gemini=google.genai.Client(api_key=_token)
     embeddings=gemini.models.embed_content(
         model="text-embedding-004",
-        conents=data, 
+        contents=[x["text"] for x in data] , 
         config=EmbedContentConfig(task_type="SEMANTIC_SIMILARITY")
     ).embeddings
 
-    data=[{"id": uid, "text": data[i], "embedding": embeddings[i].values} for i in range(len(embeddings))] #Merge them back together
+    data=[{"id": uid, "embedding": embeddings[i].values} | x for i, x in enumerate(data)] #Merge them back together
 
     """
     The text in each row of user_to_project will be combined to create a single text. Each project will be "<column_name>: <str(value)>" concatenated into a single string. Use gemini embeddings (https://ai.google.dev/gemini-api/docs/embeddings), and follow this: https://supabase.com/docs/guides/ai/semantic-search#semantic-search-in-postgres (try gte-small as well). Vectors are stored alongside the project
     """
+
+    User.table("user_to_project").delete().eq("id", uid).execute() #Clear all projects associated with the user
 
     User.table("user_to_project").insert(data).execute()
 
