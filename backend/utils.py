@@ -3,6 +3,9 @@ from flask import Flask, request, url_for
 import pathlib, sys, types, traceback, functools, json
 import dotenv, jwt, requests, sqlalchemy as sql
 
+import google
+from google.genai.types import EmbedContentConfig
+
 #Move the backend/... directories to the end of sys.path to deal with path conflicts (Python should really just make relative import based purely on location, not on sys.path)
 backend_directory=pathlib.Path(__file__).parent
 backend_directories=[backend_directory, backend_directory / 'tests']
@@ -164,3 +167,31 @@ def endpoint(endpoint, parameters, outputs=None):
 
 def get_id_from_token(token):
     return User.auth.get_user(token).user.id
+
+user_to_token_table=User.table("user_to_token")
+
+def retrieve(token, column):
+    lst=user_to_token_table.select(column).eq("id", get_id_from_token(token)).execute().data
+    if len(lst)==0:
+        return None
+    else:
+        return lst[0][column]
+        
+def get_gemini_token(token):
+    _token=retrieve(token, "gemini")
+    if not _token:
+        _token=config["TEST_USER_GEMINI_TOKEN"]
+
+    return _token
+
+def get_embeddings(token, data):
+    _token=get_gemini_token(token)
+
+    gemini=google.genai.Client(api_key=_token)
+    embeddings=gemini.models.embed_content(
+        model="text-embedding-004",
+        contents=data, 
+        config=EmbedContentConfig(task_type="SEMANTIC_SIMILARITY")
+    ).embeddings
+
+    return [x.values for x in embeddings]
