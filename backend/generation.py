@@ -59,7 +59,7 @@ def latex():
 @endpoint("/endpoint/pdf", ["filename", "resume_id", "content"], [File("output")] )
 def pdf():
     if filename is None:
-        filename=User.table("user_to_resume").select("content").and_(f"id.eq.{resume_id}, uid.in.user", resume_id).execute().data[0]["content"]
+        filename=User.table("user_to_resume").select("content").and_(f"id.eq.{resume_id}, uid.in.{get_id_from_token(token)}").execute().data[0]["content"]
 
     
     

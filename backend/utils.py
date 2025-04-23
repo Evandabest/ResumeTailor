@@ -7,9 +7,6 @@ from requests_toolbelt import MultipartEncoder
 import google
 from google.genai.types import EmbedContentConfig
 
-import google
-from google.genai.types import EmbedContentConfig
-
 #Move the backend/... directories to the end of sys.path to deal with path conflicts (Python should really just make relative import based purely on location, not on sys.path)
 backend_directory=pathlib.Path(__file__).parent
 backend_directories=[backend_directory, backend_directory / 'tests']
@@ -104,6 +101,8 @@ def endpoint(endpoint, parameters, outputs=None):
 
             parameters_.append("token")
 
+            special_params={k: k.__class__ for k in parameters_ if not isinstance(k, str)}
+
             parameters_map={} #Mapping parameters to their values 
             
             if request.is_json:
@@ -163,21 +162,19 @@ def endpoint(endpoint, parameters, outputs=None):
             file_outputs={}
 
             for k in outputs_:
-                cls=k.__class__
-                k=str(k)
-
                 if k not in persistent_locals.locals:
                     continue
                 val=persistent_locals.locals[k]
-
+                cls=k.__class__
+                k=str(k)
                 if cls==File:
-                    file_outputs[k]=(val.name, val.read())
+                    file_outputs[k]=(k, val.read())
                 elif cls==str:
                     json_outputs[k]=val
             if len(file_outputs)>0:
-                m=MultipartEncoder(fields={"json": json.dumps(json_outputs)}|file_outputs)
-                
-                return Response(m.to_string(), content_type=m.content_type, status=status_code)
+                m=MultipartEncoder(fields={"json": json.dumps(json_parts)}|file_outputs)
+
+                return Response(m.to_string(), mimetype=m.content_type, status=status_code)
             else:
                 return json_outputs, status_code
         
@@ -199,21 +196,28 @@ def retrieve(token, column):
     else:
         return lst[0][column]
         
-def get_gemini_token(token):
+def get_gemini_client(token):
     _token=retrieve(token, "gemini")
     if not _token:
         _token=config["TEST_USER_GEMINI_TOKEN"]
 
-    return _token
+    return google.genai.Client(api_key=_token)
 
 def get_embeddings(token, data):
-    _token=get_gemini_token(token)
-
-    gemini=google.genai.Client(api_key=_token)
-    embeddings=gemini.models.embed_content(
+    embeddings=get_gemini_client(token).models.embed_content(
         model="text-embedding-004",
         contents=data, 
         config=EmbedContentConfig(task_type="SEMANTIC_SIMILARITY")
     ).embeddings
 
     return [x.values for x in embeddings]
+
+def llm(token, content):
+    content=content.strip()
+    
+    return get_gemini_client(token).models.generate_content(
+        model="gemini-2.5-flash-preview-04-17",
+        contents=content
+        ).text
+
+
