@@ -9,7 +9,7 @@ table=User.table("user_to_resume")
 def validate_id(id): #Checks whether the resume referenced by the id has permission to be accessed by the user in the token
     token=inspect.currentframe().f_back.f_locals["token"]
     data=table.select("uid").eq("id", id).execute().data
-    if ((len(data)==0) or (data[0]["uid"]!=get_uid_from_token(token))):
+    if ((len(data)==0) or (data[0]["uid"]!=get_id_from_token(token))):
         raise ValueError("Current user does not have permission to access the resume at the given id")
 
 @endpoint("/resume/upload", [File("file"), "update"])
@@ -19,7 +19,7 @@ def upload():
     if not filename.name.endswith(".tex"):
         raise ValueError("Only .tex files can be uploaded")
 
-    data={"uid": get_uid_from_token(token), "content": file.read().decode(), "filename": filename.stem}
+    data={"uid": get_id_from_token(token), "content": file.read().decode(), "filename": filename}
 
     if update is None:
         action=table.insert(data)
@@ -35,7 +35,7 @@ def delete():
 
 @endpoint("/resume/list", [], ["info"])
 def list():
-    info=table.select("id, filename").execute().data
+    data=table.select("id, filename").execute().data
 
 @endpoint("/resume/rename", ["id", "name"])
 def rename():
@@ -43,6 +43,6 @@ def rename():
         raise ValueError("New name must end in '.tex'")
 
     validate_id(id)
-    table.update({"filename": Path(name).stem}).eq("id", id).execute()
+    table.update({"filename": os.path.basename(name)}).eq("id", id).execute()
     
     

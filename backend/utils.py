@@ -7,6 +7,9 @@ from requests_toolbelt import MultipartEncoder
 import google
 from google.genai.types import EmbedContentConfig
 
+import google
+from google.genai.types import EmbedContentConfig
+
 #Move the backend/... directories to the end of sys.path to deal with path conflicts (Python should really just make relative import based purely on location, not on sys.path)
 backend_directory=pathlib.Path(__file__).parent
 backend_directories=[backend_directory, backend_directory / 'tests']
@@ -190,34 +193,27 @@ def get_uid_from_token(token):
 user_to_token_table=User.table("user_to_token")
 
 def retrieve(token, column):
-    lst=user_to_token_table.select(column).eq("uid", get_uid_from_token(token)).execute().data
+    lst=user_to_token_table.select(column).eq("id", get_id_from_token(token)).execute().data
     if len(lst)==0:
         return None
     else:
         return lst[0][column]
         
-def get_gemini_client(token):
+def get_gemini_token(token):
     _token=retrieve(token, "gemini")
     if not _token:
         _token=config["TEST_USER_GEMINI_TOKEN"]
 
-    return google.genai.Client(api_key=_token)
+    return _token
 
 def get_embeddings(token, data):
-    embeddings=get_gemini_client(token).models.embed_content(
+    _token=get_gemini_token(token)
+
+    gemini=google.genai.Client(api_key=_token)
+    embeddings=gemini.models.embed_content(
         model="text-embedding-004",
         contents=data, 
         config=EmbedContentConfig(task_type="SEMANTIC_SIMILARITY")
     ).embeddings
 
     return [x.values for x in embeddings]
-
-def llm(token, content):
-    content=content.strip()
-    
-    return get_gemini_client(token).models.generate_content(
-        model="models/gemini-2.5-flash-preview-04-17",
-        contents=content
-        ).text
-
-
