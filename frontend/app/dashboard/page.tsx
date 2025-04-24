@@ -148,7 +148,6 @@ export default function DashboardPage() {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="resumes">Resumes</TabsTrigger>
           <TabsTrigger value="projects">GitHub Projects</TabsTrigger>
-          <TabsTrigger value="jobs">Job Matches</TabsTrigger>
         </TabsList>
         
         {/* Overview Tab */}
@@ -392,70 +391,6 @@ export default function DashboardPage() {
           </div>
         </TabsContent>
         
-        {/* Job Matches Tab */}
-        <TabsContent value="jobs">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-bold">Job Matches</h2>
-            
-          </div>
-          <div className="space-y-4">
-            {mockJobListings.map((job) => (
-              <Card key={job.id} className="overflow-hidden">
-                <div className={`h-2 ${
-                  job.matchScore > 90 ? "bg-green-500" : 
-                  job.matchScore > 80 ? "bg-blue-500" : "bg-orange-400"
-                }`}></div>
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle className="text-lg">{job.title}</CardTitle>
-                      <CardDescription className="flex items-center gap-1">
-                        {job.company} • {job.location}
-                      </CardDescription>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-sm font-bold text-blue-700">{job.matchScore}% Match</div>
-                      <div className="text-xs text-gray-500">Posted {new Date(job.postedDate).toLocaleDateString()}</div>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="mb-4">
-                    <h4 className="text-sm font-medium mb-2">Key Skills</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {job.skills.map((skill, i) => (
-                        <Badge 
-                          key={i} 
-                          variant={mockSkillsAnalysis.topSkills.includes(skill) ? "default" : "outline"}
-                        >
-                          {skill}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                </CardContent>
-                <CardFooter className="flex justify-between">
-                  {job.appliedWith ? (
-                    <div className="flex items-center text-sm text-green-600">
-                      <FaCheckCircle className="h-4 w-4 mr-2" /> Applied with Resume #{job.appliedWith}
-                    </div>
-                  ) : (
-                    <Button variant="outline" size="sm" asChild>
-                      <Link href={`/jobs/${job.id}`}>View Details</Link>
-                    </Button>
-                  )}
-                  <Button 
-                    size="sm" 
-                    className={job.appliedWith ? "bg-gray-200 text-gray-600" : "bg-blue-700 hover:bg-blue-800"}
-                    disabled={!!job.appliedWith}
-                  >
-                    {job.appliedWith ? "Applied" : "Create Resume"}
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
       </Tabs>
     </div>
   );
