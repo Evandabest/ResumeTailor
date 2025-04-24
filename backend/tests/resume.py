@@ -45,7 +45,7 @@ def test_upload_valid(client):
 
     is_success(client.post("/resume/upload", data={"json": json.dumps(credentials), "file": dummy_resume}))
 
-    assert [x["filename"] for x in is_success(client.post("/resume/list", json=credentials))["data"]]==["a.tex"]
+    assert [x["filename"] for x in is_success(client.post("/resume/list", json=credentials))["info"]]==["a"]
 
 def test_upload_update_invalid(client):
     """
@@ -65,7 +65,7 @@ def test_list_valid(client):
     If a user tries to list all of their uploaded resumes, it should succeed
     """
 
-    id=is_success(client.post("/resume/list", json=credentials))["data"][0]["id"]
+    id=is_success(client.post("/resume/list", json=credentials))["info"][0]["id"]
 
 def test_upload_update_valid(client):
     """
@@ -77,7 +77,7 @@ def test_upload_update_valid(client):
 
     is_success(client.post("/resume/upload", data={"json": json.dumps(credentials|{"update": id}), "file": dummy_resume}))
 
-    assert [x["filename"] for x in is_success(client.post("/resume/list", json=credentials))["data"]]==["b.tex"]
+    assert [x["filename"] for x in is_success(client.post("/resume/list", json=credentials))["info"]]==["b"]
 
 def test_rename_invalid_id(client):
     """
@@ -100,7 +100,7 @@ def test_rename_valid(client):
 
     is_success(client.post("/resume/rename", json=credentials|{"id": id, "name": "/tmp/a.tex"}))
 
-    assert [x["filename"] for x in is_success(client.post("/resume/list", json=credentials))["data"]]==["a.tex"]
+    assert [x["filename"] for x in is_success(client.post("/resume/list", json=credentials))["info"]]==["a"]
 
 def test_delete_invalid(client):
     """
@@ -114,6 +114,6 @@ def test_delete_valid(client):
     If a user tries to delete a valid resume it should succeed
     """
 
-    for x in is_success(client.post("/resume/list", json=credentials))["data"]:
+    for x in is_success(client.post("/resume/list", json=credentials))["info"]:
         is_success(client.post("/resume/delete", json=credentials|{"id": x["id"]}))
 
