@@ -178,18 +178,6 @@ export default function DashboardPage() {
             </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Matching Jobs</CardTitle>
-                <FaBriefcase className="h-4 w-4 text-blue-700" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{mockJobListings.length}</div>
-                <p className="text-xs text-gray-500 mt-1">
-                  {mockJobListings.filter(j => j.matchScore > 85).length} high matches
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Profile Strength</CardTitle>
                 <FaChartLine className="h-4 w-4 text-blue-700" />
               </CardHeader>
