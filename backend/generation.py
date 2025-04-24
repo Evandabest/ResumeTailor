@@ -4,7 +4,7 @@ from .utils import *
 def rag():
     #By default, all of the returned repos should be checked on the frontend
 
-    ids=User.rpc("match_projects", {"uid": get_id_from_token(token), "query_embedding": get_embeddings(token, [job_listing])[0], "minimum_score": 0.5, "count": 10}).execute().data #Can tweak the minimum and/or count
+    ids=User.rpc("match_projects", {"uid": get_uid_from_token(token), "query_embedding": get_embeddings(token, [job_listing])[0], "minimum_score": 0.5, "count": 10}).execute().data #Can tweak the minimum and/or count
 
     repos=User.table.select("id, name, url").in_("id", ids).execute().data
 
@@ -12,7 +12,7 @@ def rag():
 def points():
     #The user should be asked if they want to recreate the points, as well as edit the points manually if needed
 
-    projects=User.table("user_to_projects").select("text").and_(f"id.in.{tuple(ids)}, uid.eq.{get_id_from_token(token)}").execute().data
+    projects=User.table("user_to_projects").select("text").and_(f"id.in.{tuple(ids)}, uid.eq.{get_uid_from_token(token)}").execute().data
 
     output=llm(token,
     f"""
@@ -33,19 +33,20 @@ def points():
     )
 
 
-@endpoint("/generate/latex", ["input", "resume_id"], ["output"])
+@endpoint("/generate/latex", ["input", "resume_id"], ["output", "filename"])
 def latex():
     #The user should be asked if they want to recreate/edit the returned latex code
     #llm should strip first
 
+    resume=User.table("user_to_resume").select("filename, content").and_(f"id.eq.{resume_id}, uid.eq.{get_uid_from_token(token)}").execute().data[0]
 
     output=llm(token,
     f"""
-    You are editing the resume of a user to include some of their personal GitHub projects.
+You are editing the resume of a user to include some of their personal GitHub projects.
 
     Here is the LaTeX resume they want to edit:
 
-    {User.table("user_to_resume").select("content").and_(f"id.eq.{resume_id}, uid.eq.{get_id_from_token(token)}").execute().data[0]["content"]}
+    {resume["content"]}
 
     Here is the bullet point list they want to include:
 
@@ -56,11 +57,12 @@ def latex():
     Return JUST the modified resume, nothing more.
     """)
 
-@endpoint("/endpoint/pdf", ["filename", "resume_id", "content"], [File("output")] )
-def pdf():
-    if filename is None:
-        filename=User.table("user_to_resume").select("content").and_(f"id.eq.{resume_id}, uid.in.{get_id_from_token(token)}").execute().data[0]["content"]
+    filename=resume["filename"]
 
-    
+@endpoint("/endpoint/pdf", ["filename", "content"], [File("output")])
+def pdf():
+    pass
+
+
     
 

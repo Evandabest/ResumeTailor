@@ -168,7 +168,7 @@ def endpoint(endpoint, parameters, outputs=None):
                 cls=k.__class__
                 k=str(k)
                 if cls==File:
-                    file_outputs[k]=(k, val.read())
+                    file_outputs[k]=(val.name, val.read())
                 elif cls==str:
                     json_outputs[k]=val
             if len(file_outputs)>0:
@@ -190,7 +190,7 @@ def get_uid_from_token(token):
 user_to_token_table=User.table("user_to_token")
 
 def retrieve(token, column):
-    lst=user_to_token_table.select(column).eq("id", get_id_from_token(token)).execute().data
+    lst=user_to_token_table.select(column).eq("uid", get_uid_from_token(token)).execute().data
     if len(lst)==0:
         return None
     else:
