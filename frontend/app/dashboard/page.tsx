@@ -147,7 +147,7 @@ export default function DashboardPage() {
         <TabsList className="mb-4 bg-gray-100">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="resumes">Resumes</TabsTrigger>
-          <TabsTrigger value="projects">GitHub Projects</TabsTrigger>
+          {/* <TabsTrigger value="projects">GitHub Projects</TabsTrigger> */}
           <TabsTrigger value="jobs">Job Matches</TabsTrigger>
         </TabsList>
         
@@ -167,7 +167,7 @@ export default function DashboardPage() {
                 </p>
               </CardContent>
             </Card>
-            <Card>
+            {/* <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">GitHub Projects</CardTitle>
                 <FaGithub className="h-4 w-4 text-blue-700" />
@@ -176,7 +176,7 @@ export default function DashboardPage() {
                 <div className="text-2xl font-bold">{mockGithubProjects.length}</div>
                 <p className="text-xs text-gray-500 mt-1">Connected and analyzed</p>
               </CardContent>
-            </Card>
+            </Card> */}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Matching Jobs</CardTitle>
@@ -347,7 +347,7 @@ export default function DashboardPage() {
         </TabsContent>
         
         {/* GitHub Projects Tab */}
-        <TabsContent value="projects">
+        {/* <TabsContent value="projects">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-bold">Connected GitHub Projects</h2>
             <Button variant="outline" className="flex items-center gap-2">
@@ -390,7 +390,7 @@ export default function DashboardPage() {
               </Card>
             ))}
           </div>
-        </TabsContent>
+        </TabsContent> */}
         
         {/* Job Matches Tab */}
         <TabsContent value="jobs">
