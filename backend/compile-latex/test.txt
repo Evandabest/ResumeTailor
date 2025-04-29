@@ -1,1 +1,0 @@
-shlex.quote(s).replace("\n", r"\n")
