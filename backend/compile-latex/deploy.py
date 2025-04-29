@@ -2,122 +2,78 @@
 This file deploys any infrastructure updates to the AWS account pointed to in .env,
 as well as builds an image from the updated configuration and deploys a new version of the Lambda
 """
-import dotenv
-import sys, os, shlex, subprocess, time, signal
-import boto3, dateutil
+from dotenv import load_dotenv
+import sys
 
-dotenv.load_dotenv()
+load_dotenv()
+
+import os, shlex, subprocess
 
 os.environ["TF_VAR_lambda_handler"]=shlex.quote(open("main.py").read()).replace("\n", r"\n")
-os.environ["TF_VAR_region"]=os.environ["AWS_DEFAULT_REGION"]
 
-name=os.path.basename(os.path.dirname(__file__))
+returncode=subprocess.run(["terraform", "apply"]).returncode
+if returncode>0:
+    sys.exit(returncode)
 
-os.environ["TF_VAR_name"]=name
 
-signal.signal(signal.SIGINT, lambda signum, frame: sys.exit())
-if not False:
-    print("Applying Terraform configuration...")
-    process=subprocess.run(["terraform", "plan", "-detailed-exitcode"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+import boto3
+import time
+from botocore.exceptions import ClientError
 
-    if process.returncode==0:
-        print("Configuration is up to date! There is nothing to do.")
-        sys.exit()
-    elif process.returncode==1:
-        print(process.stdout)
-        sys.exit()
+def find_pipeline_arn_by_name(client, pipeline_name):
+    """Find the pipeline ARN based on the pipeline's name."""
+    paginator = client.get_paginator('list_image_pipelines')
+    for page in paginator.paginate():
+        for pipeline in page.get('imagePipelineList', []):
+            if pipeline['name'] == pipeline_name:
+                return pipeline['arn']
+    return None
 
-    is_recipe_diff=(subprocess.run(["terraform", "plan",f"-target=aws_imagebuilder_container_recipe.{name}", "-detailed-exitcode"], stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT).returncode==2)
-
-    returncode=subprocess.run(["terraform", "apply"]).returncode
-    if returncode>0:
-        sys.exit(returncode)
-
-    if not is_recipe_diff:
-        print("The container recipe was not updated, so no reason to build a new image. Exiting!")
-        sys.exit()
-
-    print("Running ImageBuilder pipeline...")
-    client=boto3.client('imagebuilder')
-
-    pipeline_arn=client.list_image_pipelines(filters=[{"name": "name", "values": [name]}])["imagePipelineList"][0]["arn"]
-
-    image_arn=client.start_image_pipeline_execution(imagePipelineArn=pipeline_arn)["imageBuildVersionArn"]
-
-    print("Waiting for the image to finish building...")
-
-    status=None
-    reason=None
-    while True:
-        response=client.get_image(imageBuildVersionArn=image_arn)["image"]["state"]
-        status=response["status"]
-        reason=response.get("reason")
-        if not status.endswith("ING"):
-            break
-        time.sleep(30)
-
-    if status!="AVAILABLE":
-        print(f"Image build is {status} due to: {reason}")
-        sys.exit(1)
-
-    print("Deploying new version of Lambda...")
-
-    client=boto3.client("lambda")
-    lambda_image_uri=client.get_function(FunctionName="compile-latex")["Code"]["ImageUri"]
-
-    client.update_function_code(FunctionName=name, ImageUri=lambda_image_uri, Publish=True)
+def wait_for_image_build(client, image_build_version_arn, poll_interval=30):
+    """Wait for the image build to complete."""
+    print(f"Waiting for build {image_build_version_arn} to complete...")
 
     while True:
-        response=client.get_function(FunctionName=name)["Configuration"]
-        status=response["State"]
-        reason=response.get("StateReason")
+        try:
+            response = client.get_image(
+                imageBuildVersionArn=image_build_version_arn
+            )
+            status = response['image']['state']['status']
+            print(f"Current status: {status}")
 
-        if status in ["Active", "Inactive"]:
+            if status in ["AVAILABLE", "FAILED", "CANCELLED"]:
+                return status
+
+            time.sleep(poll_interval)
+
+        except ClientError as e:
+            print(f"Error checking image status: {e.response['Error']['Message']}")
             break
-        elif status=="Failed":
-            print(f"Deployment of Lambda has failed due to: {reason}")
-            sys.exit(1)
-        time.sleep(30)
-    print("Deployment has succeeded!")
 
-#Delete all images and containers aside from the most recent compile-latex one
+def start_pipeline(pipeline_name):
+    client = boto3.client('imagebuilder')
 
-print("Deleting old images from ImageBuilder...")
+    arn = find_pipeline_arn_by_name(client, pipeline_name)
+    if arn is None:
+        print(f"Error: No pipeline found with name '{pipeline_name}'")
+        return
 
-client=boto3.client("imagebuilder")
-nextToken=False
-images=[]
+    try:
+        response = client.start_image_pipeline_execution(
+            imagePipelineArn=arn
+        )
+        print(f"Started execution for pipeline '{pipeline_name}'")
 
-while nextToken is not None:
-    page=client.list_images(owner="Self", filters=[{"name": "name", "values": [name]}], **({"nextToken": nextToken} if nextToken is not False else {}))
-    for image in page["imageVersionList"]:
-        nextToken1=False
+        image_build_version_arn = response['imageBuildVersionArn']
+        print(f"Image build version ARN: {image_build_version_arn}")
 
-        while nextToken1 is not None:
-            page1=client.list_image_build_versions(imageVersionArn=image["arn"], **({"nextToken": nextToken1} if nextToken1 is not False else {}))
-            images.extend(page1["imageSummaryList"])
-            nextToken1=page1.get("nextToken")
+        final_status = wait_for_image_build(client, image_build_version_arn)
+        print(f"Build completed with status: {final_status}")
 
-    nextToken=page.get("nextToken")
+    except ClientError as e:
+        print(f"Failed to start pipeline: {e.response['Error']['Message']}")
 
-images.sort(key= lambda image: dateutil.parser.parse(image["dateCreated"]), reverse=True)
 
-for image in images[1:]:
-    client.delete_image(imageBuildVersionArn=image["arn"])
+start_pipeline("compile-latex")
 
-print("Deleting old images from ECR...")
-nextToken=False
-images.clear()
-
-client=boto3.client("ecr")
-
-while nextToken is not None:
-    page=client.describe_images(repositoryName=name)
-    images.extend(page["imageDetails"])
-    nextToken=page.get("nextToken")
-
-images.sort(key= lambda image: image["imagePushedAt"], reverse=True)
-
-client.batch_delete_image(repositoryName=name, imageIds=[{"imageDigest": image["imageDigest"]} for image in images[1:]])
-
-print("Finished cleaning up!")
+boto3.client('lambda').update_function_code(FunctionName="compile-latex", Publish=True)
