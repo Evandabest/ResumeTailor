@@ -1,0 +1,114 @@
+variable "lambda_handler" {
+	type = string
+}
+
+resource "aws_imagebuilder_image_pipeline" "compile-latex" {
+  enhanced_image_metadata_enabled  = false
+  name                             = "compile-latex"
+  status                           = "ENABLED"
+  tags                             = {}
+  tags_all                         = {}
+  container_recipe_arn             = aws_imagebuilder_container_recipe.compile-latex.arn
+  infrastructure_configuration_arn = aws_imagebuilder_infrastructure_configuration.compile-latex.arn
+  distribution_configuration_arn   = aws_imagebuilder_distribution_configuration.compile-latex.arn
+  image_scanning_configuration {
+    image_scanning_enabled = false
+  }
+
+  image_tests_configuration {
+    image_tests_enabled = true
+    timeout_minutes     = 720
+  }
+}
+
+resource "aws_imagebuilder_component" "compile-latex" {
+  version = "1.0.14"
+
+  data     = <<-EOT
+            name: Build
+            description: This is hello world build document.
+            schemaVersion: 1.0
+
+            phases:
+              - name: build
+                steps:
+                  - name: HelloWorldStep
+                    action: ExecuteBash
+                    inputs:
+                        commands:
+                            - set -e
+                            - echo "Building..."
+                            - apt install -y --no-install-suggests texlive-latex-extra python3.11 python3-pip
+                            - pip3 install --break-system-packages awslambdaric
+                            - printf ${var.lambda_handler} > /main.py
+       EOT
+  name     = "compile-latex"
+  platform = "Linux"
+  supported_os_versions = [
+    "Amazon Linux 2",
+    "Amazon Linux 2023",
+  ]
+  tags     = {}
+  tags_all = {}
+
+}
+
+resource "aws_imagebuilder_container_recipe" "compile-latex" {
+  container_type           = "DOCKER"
+  version                  = "0.0.6"
+  dockerfile_template_data = <<-EOT
+        FROM {{{ imagebuilder:parentImage }}}
+        {{{ imagebuilder:environments }}}
+        {{{ imagebuilder:components }}}
+        WORKDIR "/"
+        ENTRYPOINT [ "python3", "-m", "awslambdaric" ]
+        CMD [ "main.main" ]
+    EOT
+  name                     = "compile-linux"
+  parent_image             = "debian:bookworm-slim"
+  tags                     = {}
+  tags_all                 = {}
+  working_directory        = "/tmp"
+
+
+  target_repository {
+    repository_name = "compile-latex"
+    service         = "ECR"
+  }
+  component {
+    component_arn = aws_imagebuilder_component.compile-latex.arn
+  }
+}
+
+resource "aws_imagebuilder_infrastructure_configuration" "compile-latex" {
+  instance_profile_name         = "EC2InstanceProfileForImageBuilder"
+  instance_types                = []
+  name                          = "compile-latex"
+  resource_tags                 = {}
+  security_group_ids            = []
+  tags                          = {}
+  tags_all                      = {}
+  terminate_instance_on_failure = true
+}
+
+resource "aws_imagebuilder_distribution_configuration" "compile-latex" {
+  name     = "compile-latex"
+  tags     = {}
+  tags_all = {}
+
+  distribution {
+    license_configuration_arns = []
+    region                     = "us-east-2"
+
+    container_distribution_configuration {
+      container_tags = [
+        "latest",
+      ]
+
+      target_repository {
+        repository_name = "compile-latex"
+        service         = "ECR"
+      }
+    }
+  }
+}
