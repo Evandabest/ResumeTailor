@@ -3,26 +3,30 @@ This file deploys any infrastructure updates to the AWS account pointed to in .e
 as well as builds an image from the updated configuration and deploys a new version of the Lambda
 """
 import dotenv
-import sys
-
-import os, shlex, subprocess
+import sys, os, shlex, subprocess, time
+import boto3
 
 dotenv.load_dotenv()
 
 os.environ["TF_VAR_lambda_handler"]=shlex.quote(open("main.py").read()).replace("\n", r"\n")
 
-#Run plan with extended exit code and captured output
+print("Applying Terraform configuration...")
+process=subprocess.run(["terraform", "plan", "-detailed-exitcode"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+
+if process.returncode==0:
+    print("Configuration is up to date! There is nothing to do.")
+    sys.exit()
+elif process.returncode==1:
+    print(sys.stdout)
+    sys.exit()
+else:
+    print(sys.stdout)
 
 returncode=subprocess.run(["terraform", "apply"]).returncode
 if returncode>0:
     sys.exit(returncode)
 
-
-import boto3
-import time
-from botocore.exceptions import ClientError
-
-print("Running ImageBuilder Pipeline")
+print("Running ImageBuilder pipeline...")
 client=boto3.client('imagebuilder')
 
 pipeline_arn=client.list_image_pipelines(filters=[{"name": "name", "values": ["compile-latex"]}])["imagePipelineList"][0]["arn"]
