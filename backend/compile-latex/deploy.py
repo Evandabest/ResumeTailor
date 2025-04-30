@@ -2,14 +2,16 @@
 This file deploys any infrastructure updates to the AWS account pointed to in .env,
 as well as builds an image from the updated configuration and deploys a new version of the Lambda
 """
-from dotenv import load_dotenv
+import dotenv
 import sys
-
-load_dotenv()
 
 import os, shlex, subprocess
 
+dotenv.load_dotenv()
+
 os.environ["TF_VAR_lambda_handler"]=shlex.quote(open("main.py").read()).replace("\n", r"\n")
+
+#Run plan with extended exit code and captured output
 
 returncode=subprocess.run(["terraform", "apply"]).returncode
 if returncode>0:
@@ -20,60 +22,45 @@ import boto3
 import time
 from botocore.exceptions import ClientError
 
-def find_pipeline_arn_by_name(client, pipeline_name):
-    """Find the pipeline ARN based on the pipeline's name."""
-    paginator = client.get_paginator('list_image_pipelines')
-    for page in paginator.paginate():
-        for pipeline in page.get('imagePipelineList', []):
-            if pipeline['name'] == pipeline_name:
-                return pipeline['arn']
-    return None
+print("Running ImageBuilder Pipeline")
+client=boto3.client('imagebuilder')
 
-def wait_for_image_build(client, image_build_version_arn, poll_interval=30):
-    """Wait for the image build to complete."""
-    print(f"Waiting for build {image_build_version_arn} to complete...")
+pipeline_arn=client.list_image_pipelines(filters=[{"name": "name", "values": ["compile-latex"]}])["imagePipelineList"][0]["arn"]
 
-    while True:
-        try:
-            response = client.get_image(
-                imageBuildVersionArn=image_build_version_arn
-            )
-            status = response['image']['state']['status']
-            print(f"Current status: {status}")
+image_arn=client.start_image_pipeline_execution(imagePipelineArn=pipeline_arn)["imageBuildVersionArn"]
 
-            if status in ["AVAILABLE", "FAILED", "CANCELLED"]:
-                return status
+print("Waiting for the image to finish building...")
 
-            time.sleep(poll_interval)
+status=None
+reason=None
+while True:
+    response=client.get_image(imageBuildVersionArn=image_arn)["image"]["state"]
+    status=response["status"]
+    reason=response["reason"]
+    if not status.endswith("ING"):
+        break
+    time.sleep(30)
 
-        except ClientError as e:
-            print(f"Error checking image status: {e.response['Error']['Message']}")
-            break
+if status!="AVAILABLE":
+    print(f"Image build is {status} due to: {reason}")
+    sys.exit(1)
 
-def start_pipeline(pipeline_name):
-    client = boto3.client('imagebuilder')
+print("Deploying new version of Lambda...")
 
-    arn = find_pipeline_arn_by_name(client, pipeline_name)
-    if arn is None:
-        print(f"Error: No pipeline found with name '{pipeline_name}'")
-        return
+client=boto3.client("lambda")
+lambda_image_uri=client.get_function(FunctionName="compile-latex")["Code"]["ImageUri"]
 
-    try:
-        response = client.start_image_pipeline_execution(
-            imagePipelineArn=arn
-        )
-        print(f"Started execution for pipeline '{pipeline_name}'")
+client.update_function_code(FunctionName="compile-latex", ImageUri=lambda_image_uri, Publish=True)
 
-        image_build_version_arn = response['imageBuildVersionArn']
-        print(f"Image build version ARN: {image_build_version_arn}")
+while True:
+    response=client.get_function(FunctionName="compile-latex")["Configuration"]
+    status=response["State"]
+    reason=response["StateReason"]
 
-        final_status = wait_for_image_build(client, image_build_version_arn)
-        print(f"Build completed with status: {final_status}")
-
-    except ClientError as e:
-        print(f"Failed to start pipeline: {e.response['Error']['Message']}")
-
-
-start_pipeline("compile-latex")
-
-boto3.client('lambda').update_function_code(FunctionName="compile-latex", Publish=True)
+    if status in ["Active", "Inactive"]:
+        break
+    elif status=="Failed":
+        print(f"Deployment of Lambda has failed due to: {reason}")
+        sys.exit(1)
+    time.sleep(30)
+print("Deployment has succeeded!")
