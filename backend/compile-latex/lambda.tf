@@ -15,7 +15,7 @@ resource "aws_lambda_function" "compile-latex" {
   skip_destroy                   = false
   tags                           = {}
   tags_all                       = {}
-  timeout                        = 3
+  timeout                        = 60
 
   ephemeral_storage {
     size = 512
