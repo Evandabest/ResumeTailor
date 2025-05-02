@@ -2,6 +2,10 @@ variable "lambda_handler" {
 	type = string
 }
 
+variable "region" {
+	type = string
+}
+
 resource "aws_imagebuilder_image_pipeline" "compile-latex" {
   enhanced_image_metadata_enabled  = false
   name                             = "compile-latex"
@@ -22,7 +26,7 @@ resource "aws_imagebuilder_image_pipeline" "compile-latex" {
 }
 
 resource "aws_imagebuilder_component" "compile-latex" {
-  version = "1.0.14"
+  version = "0.0.1"
 
   data     = <<-EOT
             name: Build
@@ -40,7 +44,8 @@ resource "aws_imagebuilder_component" "compile-latex" {
                             - echo "Building..."
                             - apt install -y --no-install-suggests texlive-latex-extra python3.11 python3-pip
                             - pip3 install --break-system-packages awslambdaric
-                            - printf ${var.lambda_handler} > /main.py
+                            - |- 
+                              printf ${var.lambda_handler} > /main.py
        EOT
   name     = "compile-latex"
   platform = "Linux"
@@ -55,7 +60,7 @@ resource "aws_imagebuilder_component" "compile-latex" {
 
 resource "aws_imagebuilder_container_recipe" "compile-latex" {
   container_type           = "DOCKER"
-  version                  = "0.0.6"
+  version                  = "0.0.1"
   dockerfile_template_data = <<-EOT
         FROM {{{ imagebuilder:parentImage }}}
         {{{ imagebuilder:environments }}}
@@ -78,6 +83,10 @@ resource "aws_imagebuilder_container_recipe" "compile-latex" {
   component {
     component_arn = aws_imagebuilder_component.compile-latex.arn
   }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_imagebuilder_infrastructure_configuration" "compile-latex" {
@@ -98,7 +107,7 @@ resource "aws_imagebuilder_distribution_configuration" "compile-latex" {
 
   distribution {
     license_configuration_arns = []
-    region                     = "us-east-2"
+    region                     = var.region
 
     container_distribution_configuration {
       container_tags = [
