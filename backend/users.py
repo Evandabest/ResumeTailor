@@ -43,7 +43,7 @@ def modify():
         update_dict["password"]=password
     #response=User.auth.update_user(update_dict) #This will not work, as modifying the email of as a user REQUIRES you to validate the new email --- unlike with signing up, there is NO option available in the dashboard for you to skip this
 
-    user=Admin.auth.admin.update_user_by_id(get_id_from_token(token), update_dict).user
+    user=Admin.auth.admin.update_user_by_id(get_uid_from_token(token), update_dict).user
 
     if email is not None:
         email=user.email
@@ -68,7 +68,7 @@ def logout():
 
 @endpoint("/delete", [])
 def delete():
-    Admin.auth.admin.delete_user(get_id_from_token(token))
+    Admin.auth.admin.delete_user(get_uid_from_token(token))
 
 
 
