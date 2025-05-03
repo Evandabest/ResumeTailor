@@ -5,8 +5,7 @@ def main(event, context):
     os.system("rm -rf *")
 
     params=event.get("queryStringParameters", event)
-
-    return [event, params]
+    return [str(params), str(params.__class__), params.get("filename", "Hello")]
     filename=params["filename"]
     with open(filename+".tex", "w+") as f:
         f.write(params["content"])

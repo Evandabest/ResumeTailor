@@ -69,7 +69,7 @@ resource "aws_imagebuilder_container_recipe" "compile-latex" {
         ENTRYPOINT [ "python3", "-m", "awslambdaric" ]
         CMD [ "main.main" ]
     EOT
-  name                     = "compile-linux"
+  name                     = "compile-latex"
   parent_image             = "debian:bookworm-slim"
   tags                     = {}
   tags_all                 = {}
