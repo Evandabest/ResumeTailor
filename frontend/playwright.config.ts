@@ -16,8 +16,9 @@ module.exports = defineConfig({
   webServer: {
     command: 'npm run dev',
     port: 3000,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: true, // Allow reusing existing server
     stdout: 'pipe',
     stderr: 'pipe',
+    timeout: 120000, // Increase timeout for server start
   }
 });
