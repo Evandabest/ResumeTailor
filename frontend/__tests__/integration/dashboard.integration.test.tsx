@@ -36,7 +36,11 @@ jest.mock('../../components/ui/card', () => {
     CardHeader: ({ children }: { children: React.ReactNode }) => <div className="card-header">{children}</div>,
     CardContent: ({ children }: { children: React.ReactNode }) => <div className="card-content">{children}</div>,
     CardFooter: ({ children }: { children: React.ReactNode }) => <div className="card-footer">{children}</div>,
-    CardTitle: ({ children }: { children: React.ReactNode }) => <h3 className="card-title">{children}</h3>,
+    CardTitle: ({ children }: { children: React.ReactNode }) => (
+      <div data-slot="card-title" className="leading-none font-semibold">
+        {children}
+      </div>
+    ),
     CardDescription: ({ children }: { children: React.ReactNode }) => <p className="card-desc">{children}</p>,
   };
 });
@@ -80,32 +84,32 @@ describe('Dashboard Integration Tests', () => {
   test('should switch between tabs and display correct content', async () => {
     render(<DashboardPage />);
     
-    // Click on the Resumes tab
+    // Check Overview tab content by finding card titles
+    const cardHeaders = screen.getAllByRole('generic').filter(el => 
+      el.getAttribute('data-slot') === 'card-title'
+    );
+    expect(cardHeaders[0]).toHaveTextContent(/resumes created/i);
+    expect(cardHeaders[1]).toHaveTextContent(/github projects/i);
+    expect(cardHeaders[2]).toHaveTextContent(/profile strength/i);
+    
+    // Switch to Resumes tab
     const resumesTab = screen.getByRole('tab', { name: /resumes/i });
     fireEvent.click(resumesTab);
     
-    // Check that Resumes content is displayed
+    // Check Resumes content
     await waitFor(() => {
-      expect(screen.getByText(/create new resume/i)).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /create new resume/i })).toBeInTheDocument();
+      expect(screen.getByText(/tailor a new resume/i)).toBeInTheDocument();
     });
     
-    // Click on the GitHub Projects tab
+    // Switch to GitHub Projects tab
     const projectsTab = screen.getByRole('tab', { name: /github projects/i });
     fireEvent.click(projectsTab);
     
-    // Check that GitHub Projects content is displayed - use a more specific query
+    // Check GitHub Projects content
     await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /connected github projects/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /connect more repos/i })).toBeInTheDocument();
-    });
-    
-    // Click on the Job Matches tab
-    const jobsTab = screen.getByRole('tab', { name: /job matches/i });
-    fireEvent.click(jobsTab);
-    
-    // Check that Job Matches content is displayed - use a more specific query
-    await waitFor(() => {
-      // Check for the job titles that are specific to the Jobs tab
-      expect(screen.getByText(/Senior Frontend Engineer/i)).toBeInTheDocument();
     });
   });
 

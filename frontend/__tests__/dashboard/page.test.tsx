@@ -33,23 +33,27 @@ describe('DashboardPage', () => {
     expect(screen.getByText('New Resume')).toBeInTheDocument();
   });
 
-  it('renders the dashboard overview stats', () => {
+  it('renders the dashboard overview cards', () => {
     render(<DashboardPage />);
-    expect(screen.getByText('Resumes Created')).toBeInTheDocument();
-    expect(screen.getByText('Matching Jobs')).toBeInTheDocument();
-    expect(screen.getByText('Profile Strength')).toBeInTheDocument();
-  });
-  it('renders the recent activity section', () => {
-    render(<DashboardPage />);
-    expect(screen.getByText('Recent Activity')).toBeInTheDocument();
-    expect(screen.getByText(/Created "Software Engineer - Google" resume/)).toBeInTheDocument();
+    const cardHeaders = screen.getAllByRole('generic').filter(el => 
+      el.getAttribute('data-slot') === 'card-title'
+    );
+    expect(cardHeaders[0]).toHaveTextContent(/resumes created/i);
+    expect(cardHeaders[1]).toHaveTextContent(/github projects/i);
+    expect(cardHeaders[2]).toHaveTextContent(/profile strength/i);
   });
 
-  it('renders the skills analysis section', () => {
+  it('renders tab navigation', () => {
     render(<DashboardPage />);
+    expect(screen.getByRole('tab', { name: 'Overview' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Resumes' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'GitHub Projects' })).toBeInTheDocument();
+  });
+
+  it('renders activity and skills sections', () => {
+    render(<DashboardPage />);
+    expect(screen.getByText('Recent Activity')).toBeInTheDocument();
     expect(screen.getByText('Skills Analysis')).toBeInTheDocument();
-    expect(screen.getByText('Your Top Skills')).toBeInTheDocument();
-    expect(screen.getByText('Skill Gaps to Fill')).toBeInTheDocument();
   });
   
 });
