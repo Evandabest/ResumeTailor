@@ -121,39 +121,6 @@ pdm run pytest
 pdm run pytest --no-cov
 ```
 
-### Key Files
-
-- `app.py`: Main application entry point
-- `users.py`: Authentication and user management
-- `github.py`: GitHub integration and project analysis
-- `resume.py`: Resume file management
-- `utils.py`: Shared utilities and endpoint decorators
-
-### Architecture Notes
-
-1. **Authentication Flow**
-   - JWT-based auth via Supabase
-   - Token refresh mechanism
-   - Support for both local and global logout
-
-2. **GitHub Integration**
-   - Repository filtering and analysis
-   - Semantic search using Gemini embeddings
-   - Project metadata extraction
-
-3. **Resume Management**
-   - LaTeX file validation
-   - Per-user resume storage
-   - File operations (upload, rename, delete)
-
-## Error Handling
-
-Common error types:
-- `StaleTokenError`: Authentication token expired
-- `ValueError`: Invalid input parameters
-- Database connection errors
-- File validation errors
-
 ## Contributing
 
 1. Check issues and create feature branch
@@ -161,7 +128,3 @@ Common error types:
 3. Ensure all tests pass: `pdm run pytest`
 4. Update documentation if needed
 5. Submit pull request
-
-## File Size Limits
-- Resume uploads: 5MB max
-- Review `app.config['MAX_CONTENT_LENGTH']` for current limits
