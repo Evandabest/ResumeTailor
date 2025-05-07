@@ -164,3 +164,10 @@ def endpoint(endpoint, parameters, outputs=None):
 
 def get_id_from_token(token):
     return User.auth.get_user(token).user.id
+
+def extract_keywords(resume_text, keywords):
+    """
+    Extracts keywords that appear in the resume text.
+    Case-insensitive.
+    """
+    return [kw for kw in keywords if kw.lower() in resume_text.lower()]
