@@ -15,11 +15,11 @@ def link():
     #Assumes token is valid
     if value=="":
         value=None
-    user_to_token_table.upsert({"id": get_id_from_token(token), column: value}).execute()
+    user_to_token_table.upsert({"uid": get_id_from_token(token), column: value}).execute()
 
 #For internal use
 def retrieve(token, column):
-    lst=user_to_token_table.select(column).eq("id", get_id_from_token(token)).execute().data
+    lst=user_to_token_table.select(column).eq("uid", get_id_from_token(token)).execute().data
     if len(lst)==0:
         return None
     else:
@@ -116,28 +116,28 @@ def _import():
         config=EmbedContentConfig(task_type="SEMANTIC_SIMILARITY")
     ).embeddings
 
-    data=[{"id": uid, "embedding": embeddings[i].values} | x for i, x in enumerate(data)] #Merge them back together
+    data=[{"uid": uid, "embedding": embeddings[i].values} | x for i, x in enumerate(data)] #Merge them back together
 
     """
     The text in each row of user_to_project will be combined to create a single text. Each project will be "<column_name>: <str(value)>" concatenated into a single string. Use gemini embeddings (https://ai.google.dev/gemini-api/docs/embeddings), and follow this: https://supabase.com/docs/guides/ai/semantic-search#semantic-search-in-postgres (try gte-small as well). Vectors are stored alongside the project
     """
 
-    User.table("user_to_project").delete().eq("id", uid).execute() #Clear all projects associated with the user
+    User.table("user_to_project").delete().eq("uid", uid).execute() #Clear all projects associated with the user
 
     User.table("user_to_project").insert(data).execute()
 
 @endpoint("/github/projects/view", [], ["repos"])
 def view_projects():
-    repos=User.table("user_to_project").select("name, url").eq("id", get_id_from_token(token)).execute().data
+    repos=User.table("user_to_project").select("name, url").eq("uid", get_id_from_token(token)).execute().data
 
 #/github/selection --- stores JSON mapping between name of project and whether it was selected on the frontend during project import. /get can be used to retrieve it, and /set can be used to, well, set it.
 @endpoint("/github/selection/set", ["data"])
 def _set():
-    User.table("user_to_selection").upsert({"id": get_id_from_token(token), "data": data}).execute()
+    User.table("user_to_selection").upsert({"uid": get_id_from_token(token), "data": data}).execute()
 
 @endpoint("/github/selection/get", [], ["data"])
 def _get():
-    data=User.table("user_to_selection").select("data").eq("id", get_id_from_token(token)).execute().data
+    data=User.table("user_to_selection").select("data").eq("uid", get_id_from_token(token)).execute().data
 
     if len(data)==0:
         data={}
