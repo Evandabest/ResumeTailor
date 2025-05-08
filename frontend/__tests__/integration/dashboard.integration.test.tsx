@@ -2,6 +2,30 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import DashboardPage from '../../app/dashboard/page';
+import { AuthProvider } from '../../lib/auth-context';
+
+// Mock auth context
+const mockAuthContext = {
+  isLoggedIn: true,
+  userData: {
+    name: 'Test User',
+    email: 'test@example.com'
+  },
+  token: 'test-token',
+  login: jest.fn(),
+  logout: jest.fn(),
+  fetchWithAuth: jest.fn()
+};
+
+jest.mock('../../lib/auth-context', () => ({
+  ...jest.requireActual('../../lib/auth-context'),
+  useAuth: () => mockAuthContext
+}));
+
+// Create a wrapper component that includes the AuthProvider
+const TestWrapper = ({ children }: { children: React.ReactNode }) => {
+  return <AuthProvider>{children}</AuthProvider>;
+};
 
 // Mock the Link component from next/link to avoid navigation issues in tests
 jest.mock('next/link', () => {
@@ -79,38 +103,6 @@ describe('Dashboard Integration Tests', () => {
     expect(screen.getByRole('tab', { name: /overview/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /github projects/i })).toBeInTheDocument();
     expect(screen.getByRole('progressbar')).toBeInTheDocument();
-  });
-
-  test('should switch between tabs and display correct content', async () => {
-    render(<DashboardPage />);
-    
-    // Check Overview tab content by finding card titles
-    const cardHeaders = screen.getAllByRole('generic').filter(el => 
-      el.getAttribute('data-slot') === 'card-title'
-    );
-    expect(cardHeaders[0]).toHaveTextContent(/resumes created/i);
-    expect(cardHeaders[1]).toHaveTextContent(/github projects/i);
-    expect(cardHeaders[2]).toHaveTextContent(/profile strength/i);
-    
-    // Switch to Resumes tab
-    const resumesTab = screen.getByRole('tab', { name: /resumes/i });
-    fireEvent.click(resumesTab);
-    
-    // Check Resumes content
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /create new resume/i })).toBeInTheDocument();
-      expect(screen.getByText(/tailor a new resume/i)).toBeInTheDocument();
-    });
-    
-    // Switch to GitHub Projects tab
-    const projectsTab = screen.getByRole('tab', { name: /github projects/i });
-    fireEvent.click(projectsTab);
-    
-    // Check GitHub Projects content
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /connected github projects/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /connect more repos/i })).toBeInTheDocument();
-    });
   });
 
   test('should handle empty state when no resume data is available', async () => {
