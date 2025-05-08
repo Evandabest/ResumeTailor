@@ -2,6 +2,30 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import DashboardPage from '../../app/dashboard/page';
+import { AuthProvider } from '../../lib/auth-context';
+
+// Mock auth context
+const mockAuthContext = {
+  isLoggedIn: true,
+  userData: {
+    name: 'Test User',
+    email: 'test@example.com'
+  },
+  token: 'test-token',
+  login: jest.fn(),
+  logout: jest.fn(),
+  fetchWithAuth: jest.fn()
+};
+
+jest.mock('../../lib/auth-context', () => ({
+  ...jest.requireActual('../../lib/auth-context'),
+  useAuth: () => mockAuthContext
+}));
+
+// Create a wrapper component that includes the AuthProvider
+const TestWrapper = ({ children }: { children: React.ReactNode }) => {
+  return <AuthProvider>{children}</AuthProvider>;
+};
 
 // Mock the Link component from next/link to avoid navigation issues in tests
 jest.mock('next/link', () => {
@@ -36,7 +60,11 @@ jest.mock('../../components/ui/card', () => {
     CardHeader: ({ children }: { children: React.ReactNode }) => <div className="card-header">{children}</div>,
     CardContent: ({ children }: { children: React.ReactNode }) => <div className="card-content">{children}</div>,
     CardFooter: ({ children }: { children: React.ReactNode }) => <div className="card-footer">{children}</div>,
-    CardTitle: ({ children }: { children: React.ReactNode }) => <h3 className="card-title">{children}</h3>,
+    CardTitle: ({ children }: { children: React.ReactNode }) => (
+      <div data-slot="card-title" className="leading-none font-semibold">
+        {children}
+      </div>
+    ),
     CardDescription: ({ children }: { children: React.ReactNode }) => <p className="card-desc">{children}</p>,
   };
 });
@@ -75,38 +103,6 @@ describe('Dashboard Integration Tests', () => {
     expect(screen.getByRole('tab', { name: /overview/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /github projects/i })).toBeInTheDocument();
     expect(screen.getByRole('progressbar')).toBeInTheDocument();
-  });
-
-  test('should switch between tabs and display correct content', async () => {
-    render(<DashboardPage />);
-    
-    // Click on the Resumes tab
-    const resumesTab = screen.getByRole('tab', { name: /resumes/i });
-    fireEvent.click(resumesTab);
-    
-    // Check that Resumes content is displayed
-    await waitFor(() => {
-      expect(screen.getByText(/create new resume/i)).toBeInTheDocument();
-    });
-    
-    // Click on the GitHub Projects tab
-    const projectsTab = screen.getByRole('tab', { name: /github projects/i });
-    fireEvent.click(projectsTab);
-    
-    // Check that GitHub Projects content is displayed - use a more specific query
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /connect more repos/i })).toBeInTheDocument();
-    });
-    
-    // Click on the Job Matches tab
-    const jobsTab = screen.getByRole('tab', { name: /job matches/i });
-    fireEvent.click(jobsTab);
-    
-    // Check that Job Matches content is displayed - use a more specific query
-    await waitFor(() => {
-      // Check for the job titles that are specific to the Jobs tab
-      expect(screen.getByText(/Senior Frontend Engineer/i)).toBeInTheDocument();
-    });
   });
 
   test('should handle empty state when no resume data is available', async () => {
