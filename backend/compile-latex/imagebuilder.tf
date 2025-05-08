@@ -25,7 +25,7 @@ resource "aws_imagebuilder_image_pipeline" "compile-latex" {
   }
 }
 
-resource "aws_imagebuilder_component" "compile-latex" {
+resource "aws_imagebuilder_component" "HelloWorld" {
   version = "0.0.1"
 
   data     = <<-EOT
@@ -40,14 +40,9 @@ resource "aws_imagebuilder_component" "compile-latex" {
                     action: ExecuteBash
                     inputs:
                         commands:
-                            - set -e
-                            - echo "Building..."
-                            - apt install -y --no-install-suggests texlive-latex-extra python3.11 python3-pip
-                            - pip3 install --break-system-packages awslambdaric
-                            - |- 
-                              printf ${var.lambda_handler} > /main.py
+                            - echo "Hello world!"
        EOT
-  name     = "compile-latex"
+  name     = "HelloWorld"
   platform = "Linux"
   supported_os_versions = [
     "Amazon Linux 2",
@@ -64,7 +59,14 @@ resource "aws_imagebuilder_container_recipe" "compile-latex" {
   dockerfile_template_data = <<-EOT
         FROM {{{ imagebuilder:parentImage }}}
         {{{ imagebuilder:environments }}}
-        {{{ imagebuilder:components }}}
+        RUN echo "Building..."
+
+	RUN apt update
+	RUN apt install -y --no-install-suggests texlive-latex-extra python3.11 python3-pip curl
+	RUN pip3 install --break-system-packages awslambdaric
+
+	RUN printf ${var.lambda_handler} > /main.py
+
         WORKDIR "/"
         ENTRYPOINT [ "python3", "-m", "awslambdaric" ]
         CMD [ "main.main" ]
@@ -81,7 +83,7 @@ resource "aws_imagebuilder_container_recipe" "compile-latex" {
     service         = "ECR"
   }
   component {
-    component_arn = aws_imagebuilder_component.compile-latex.arn
+    component_arn = aws_imagebuilder_component.HelloWorld.arn
   }
 
   lifecycle {
