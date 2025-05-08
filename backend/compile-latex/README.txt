@@ -7,7 +7,7 @@ To use:
 
 	* Now, run `pdm run deploy.py`
 
-When modifying main.py, remember to update the version numbers for both the recipe and the component
+When modifying main.py, remember to update the version number of the recipe (don't worry --- if you happen to forget, Terraform will helpfully remind you when you try to apply the new configuration)
 
 
 

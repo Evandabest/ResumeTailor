@@ -1,5 +1,6 @@
 from .utils import *
 import io, base64
+
 @endpoint("/generate/rag", ["job_listing"], ["repos"])
 def rag():
     #By default, all of the returned repos should be checked on the frontend
@@ -62,12 +63,16 @@ You are editing the resume of a user to include some of their personal GitHub pr
 @endpoint("/endpoint/pdf", ["filename", "content"], [File("output")])
 def pdf():
     filename+=".tex"
-    response=requests.get(config["LATEX_COMPILER_URL"], params={"filename": filename, "content": content}) #The file on the lambda is saved as filename
-    
-    if response.status_code!=200:
-        raise ValueError(response.headers["Error-Message"])
+    response=requests.get(config["LATEX_COMPILER_URL"], params={"filename": filename, "content": content}).json() #The file on the lambda is saved as filename
+
+    if response["statusCode"]!=200:
+        raise ValueError(response["headers"]["Error-Message"])
     else:
-        output=io.BytesIO(response.content)
+        body=response["body"]
+        if response["isBase64Encoded"]:
+            body=base64.b64decode(body)
+
+        output=io.BytesIO(body)
         output.name=filename
 
 

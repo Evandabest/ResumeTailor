@@ -1,12 +1,13 @@
-import os, subprocess
+import os, subprocess, json, base64
 
 def main(event, context):
     os.chdir("/tmp")
     os.system("rm -rf *")
 
     params=event.get("queryStringParameters", event)
-    return [str(params), str(params.__class__), params.get("filename", "Hello")]
+
     filename=params["filename"]
+
     with open(filename+".tex", "w+") as f:
         f.write(params["content"])
 
@@ -21,10 +22,10 @@ def main(event, context):
     else:
        body=open(filename+".pdf", "rb").read()
 
-    return {
+    return json.dumps({
     "headers": headers,
     "statusCode": status_code, 
-    "body": body,
+    "body": base64.b64encode(body).decode(),
     'isBase64Encoded': False
-    }
+    })
 
