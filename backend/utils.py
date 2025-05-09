@@ -2,6 +2,7 @@ from supabase import *
 from flask import Flask, request, url_for
 import pathlib, sys, types, traceback, functools, json
 import dotenv, jwt, requests, sqlalchemy as sql
+import os
 
 #Move the backend/... directories to the end of sys.path to deal with path conflicts (Python should really just make relative import based purely on location, not on sys.path)
 backend_directory=pathlib.Path(__file__).parent
@@ -13,18 +14,16 @@ app = Flask(__name__)
 
 app.config['MAX_CONTENT_LENGTH'] = 5 * 1000 * 1000 #Uploaded files must be at most 5 MB
 
-config=dotenv.dotenv_values()
-
-User = create_client(config["SUPABASE_URL"], config["SUPABASE_USER_KEY"])
-Admin = create_client(config["SUPABASE_URL"], config["SUPABASE_ADMIN_KEY"])
+User = create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_USER_KEY"])
+Admin = create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_ADMIN_KEY"])
 
 engine=sql.create_engine(sql.URL.create(
 "postgresql+psycopg2",
-username=config["SUPABASE_PSQL_USER"],
-password=config["SUPABASE_PSQL_PASSWORD"],
-host=config["SUPABASE_PSQL_HOST"],
-port=int(config["SUPABASE_PSQL_PORT"]),
-database=config["SUPABASE_PSQL_DBNAME"],
+username=os.environ["SUPABASE_PSQL_USER"],
+password=os.environ["SUPABASE_PSQL_PASSWORD"],
+host=os.environ["SUPABASE_PSQL_HOST"],
+port=int(os.environ["SUPABASE_PSQL_PORT"]),
+database=os.environ["SUPABASE_PSQL_DBNAME"],
 query={"sslmode": "disable"}
 ))
 
@@ -132,7 +131,7 @@ def endpoint(endpoint, parameters, outputs=None):
                     except:
                         raise StaleTokenError
                     else:
-                        session_id=jwt.decode(token, config["SUPABASE_JWT_SECRET"], algorithms=["HS256"], options={"verify_signature": True, "verify_aud":False, "verify_iss":False, "verify_exp": False, "verify_iat": False, "verify_nbf": False})["session_id"]
+                        session_id=jwt.decode(token, os.environ["SUPABASE_JWT_SECRET"], algorithms=["HS256"], options={"verify_signature": True, "verify_aud":False, "verify_iss":False, "verify_exp": False, "verify_iat": False, "verify_nbf": False})["session_id"]
 
                         with engine.connect() as connection:
                             if connection.execute(sql.text("SELECT id FROM auth.sessions WHERE id = :id LIMIT 1"), {"id": session_id}).first() is None:

@@ -1,4 +1,4 @@
-from .utils import *
+from utils import *
 
 from github import Github, Auth
 from github.GithubException import UnknownObjectException
@@ -7,6 +7,7 @@ from github.GithubObject import NotSet
 
 import google
 from google.genai.types import EmbedContentConfig
+import os
 
 user_to_token_table=User.table("user_to_token")
 @endpoint("/user_to_token/update", ["value", "column"]) #Used for linking, updating, and unlinking
@@ -143,4 +144,6 @@ def _get():
         data={}
     else:
         data=data[0]["data"]
+
+SUPABASE_URL = os.environ["SUPABASE_URL"]
 
