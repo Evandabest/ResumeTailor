@@ -1,0 +1,27 @@
+name: Deploy Backend to Vercel and Health Check
+
+on:
+  push:
+    branches: [main]  # or your default branch
+  workflow_dispatch:
+
+jobs:
+  deploy-and-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: ./backend
+          prod: true
+
+      - name: Health check endpoint
+        run: |
+          sleep 30  # Wait for deployment to finish
+          curl -f https://your-vercel-backend-url.vercel.app/health
