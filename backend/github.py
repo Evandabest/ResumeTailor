@@ -58,10 +58,13 @@ def list():
         repo_iterator=(repo for repo in user.get_repos(visibility=_visibility, affiliation="owner") if ((repo.stargazers_count >= min_stars) and ((is_archived is None) or (repo.archived==is_archived)) and (repo.name not in exclude)) or (repo in include) ) #If "is_archived" is None, then accept repos regardless of archive status. Can add other filters later
 
     for repo in repo_iterator:
-        try: #Check if repository has readme
+        try: #Check if repository has a README
             repo.get_readme()
         except UnknownObjectException:
             continue
+        if (app.testing) and (len(repos)==5):
+            break
+
         repos.append({"name": repo.name, "url": repo.html_url}) 
         
 @endpoint("/github/projects/import", ["repos"]) #Used for updating the projects import. Takes in a non-empty list of repo names

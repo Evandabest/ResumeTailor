@@ -26,6 +26,6 @@ def main(event, context):
     "headers": headers,
     "statusCode": status_code, 
     "body": base64.b64encode(body).decode(),
-    'isBase64Encoded': False
+    'isBase64Encoded': True
     })
 

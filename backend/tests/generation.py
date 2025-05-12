@@ -4,12 +4,45 @@ import json, os
 token=None
 credentials=None
 
-username="..."
+username="evanhaque1@gmail.com"
 password="test123"
 
 resume_filename="test_resume"
 
-job_listing="..."
+job_listing="""
+About the position
+
+At Vimeo, we love designing and engineering tools that combine power with ease of use. Our engineers work on professional-grade video tools for creators and have the opportunity to do way more than write code. We’re a small team that cares about collaboration, encourages curiosity, celebrates technical excellence, and is driven by careful attention to detail and planning for the future. We believe diversity of perspective and experience are key to building great technology and believe that the best way to iterate towards success is by taking care of ourselves, our families, our users, and one another. Join our team in NYC! This full-time, 40-hour per week internship requires an in-office presence Monday through Thursday, 9 AM to 5 PM EST. Fridays are remote work days.
+Responsibilities
+
+    Collaborate with product designers and engineers to build prototypes and test new features using our Design System and React component library
+    Write clean, well-tested, and performant library and product code using React and CSS
+    Find common UI patterns and consolidate them into scalable, composable components
+    Grow technically and professionally in a collaborative and inclusive environment with opportunities to learn and share with others
+    Build and improve tools for video creators that combine high-quality user experience with performance and scalability
+
+Requirements
+
+    MUST BE a Rising Junior or Rising Senior; enrolled in an undergraduate degree
+
+Nice-to-haves
+
+    A solid understanding of modern JavaScript, semantic HTML, and the DOM
+    Experience with Typescript
+    Strong knowledge of React conventions and best practices
+    Experience with common CSS tooling like CSS-in-JS and SCSS
+    Able to write simple, maintainable and thorough unit tests using Jest
+    Experience working with component libraries, design systems and design tools like Figma and Storybook
+    An understanding of basic performance optimization for web applications
+    A strong eye for product design with a focus on interactivity
+
+Benefits
+
+    Paid internship with hourly range of $30-35
+    Mentorship from a Vimean Mentor
+    Hands-on experience and meaningful projects
+    Networking with industry experts
+"""
 
 resume_id=None
 def setup(client):
@@ -22,7 +55,7 @@ def setup(client):
 
     client.post("/github/projects/import", json=credentials|{"repos": repos})
 
-    client.post("/resume/upload", data={"json": json.dumps(credentials), "file": open(resume_filename+".tex")})
+    client.post("/resume/upload", data={"json": json.dumps(credentials), "file": open(os.path.join(os.path.dirname(os.path.abspath(__file__)),resume_filename+".tex"),"rb")})
 
     resume_id=[x["id"] for x in client.post("/resume/list", json=credentials).json["info"] if x["filename"]==resume_filename][0]
 
@@ -48,7 +81,7 @@ def test_points_valid(client):
     """
     global points
 
-    points=is_success(client.post("/generate/points", json=credentials|{"ids":repos, "job_listing": job_listing}))["points"]
+    points=is_success(client.post("/generate/points", json=credentials|{"ids":repos, "job_listing": job_listing}))["output"]
 
     assert isinstance(points, str) and len(points)>0
 

@@ -216,7 +216,7 @@ def llm(token, content):
     content=content.strip()
     
     return get_gemini_client(token).models.generate_content(
-        model="gemini-2.5-flash-preview-04-17",
+        model="models/gemini-2.5-flash-preview-04-17",
         contents=content
         ).text
 

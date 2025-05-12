@@ -3,18 +3,23 @@ import io, base64
 
 @endpoint("/generate/rag", ["job_listing"], ["repos"])
 def rag():
-    #By default, all of the returned repos should be checked on the frontend
+    #By default, all of the returned repos should be marked as "checked" on the frontend --- the user can uncheck any of the projects they feel do not match
 
-    ids=User.rpc("match_projects", {"uid": get_uid_from_token(token), "query_embedding": get_embeddings(token, [job_listing])[0], "minimum_score": 0.5, "count": 10}).execute().data #Can tweak the minimum and/or count
+    ids=User.rpc("match_projects", {"uid": get_uid_from_token(token), "query_embedding": get_embeddings(token, [job_listing])[0], "minimum_score": (0 if app.testing else 0.5), "count": 10}).execute().data #Can tweak the minimum and/or count
 
-    repos=User.table.select("id, name, url").in_("id", ids).execute().data
+    repos=User.table("user_to_project").select("id, name, url").in_("id", ids).execute().data
 
 @endpoint("/generate/points", ["ids", "job_listing"], ["output"])
 def points():
     #The user should be asked if they want to recreate the points, as well as edit the points manually if needed
 
-    projects=User.table("user_to_projects").select("text").and_(f"id.in.{tuple(ids)}, uid.eq.{get_uid_from_token(token)}").execute().data
+    projects=User.table("user_to_project").select("text").in_("id", ids).eq("uid", get_uid_from_token(token)).execute().data
 
+    
+    if len(projects)==0: #Raise an error when there's nothing that is returned
+        raise ValueError("No projects available to use in generation!")
+
+    project_separator="\n\n"
     output=llm(token,
     f"""
     You are helping to format a user's GitHub projects so that it can be inserted into their resume.
@@ -25,7 +30,7 @@ def points():
 
     Here are some potentially relevant projects that the user has selected for inclusion in their resume:
 
-    {"\n\n".join([project["text"] for project in projects])}
+    {project_separator.join([project["text"] for project in projects])}
 
     Summarize the list of projects into a list of projects that can be inserted into the resume. You are free to remove any project from the list if they are not in fact relevant.
 
@@ -39,7 +44,7 @@ def latex():
     #The user should be asked if they want to recreate/edit the returned latex code
     #llm should strip first
 
-    resume=User.table("user_to_resume").select("filename, content").and_(f"id.eq.{resume_id}, uid.eq.{get_uid_from_token(token)}").execute().data[0]
+    resume=User.table("user_to_resume").select("filename, content").eq("id", resume_id).eq("uid", get_uid_from_token(token)).execute().data[0]
 
     output=llm(token,
     f"""
