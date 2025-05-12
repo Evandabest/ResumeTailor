@@ -4,7 +4,10 @@ def main(event, context):
     os.chdir("/tmp")
     os.system("rm -rf *")
 
-    params=event.get("queryStringParameters", event)
+    if "body" in event:
+        params=json.loads(event["body"])
+    else:
+        params=event
 
     filename=params["filename"]
 
