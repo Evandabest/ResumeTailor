@@ -65,10 +65,10 @@ You are editing the resume of a user to include some of their personal GitHub pr
 
     filename=resume["filename"]
 
-@endpoint("/endpoint/pdf", ["filename", "content"], [File("output")])
+@endpoint("/generate/pdf", ["filename", "content"], [File("output")])
 def pdf():
     filename+=".tex"
-    response=requests.get(config["LATEX_COMPILER_URL"], params={"filename": filename, "content": content}).json() #The file on the lambda is saved as filename
+    response=requests.post(config["LATEX_COMPILER_URL"], json={"filename": filename, "content": content}).json()
 
     if response["statusCode"]!=200:
         raise ValueError(response["headers"]["Error-Message"])

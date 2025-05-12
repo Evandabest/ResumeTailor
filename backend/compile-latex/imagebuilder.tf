@@ -55,7 +55,7 @@ resource "aws_imagebuilder_component" "HelloWorld" {
 
 resource "aws_imagebuilder_container_recipe" "compile-latex" {
   container_type           = "DOCKER"
-  version                  = "0.0.1"
+  version                  = "0.0.2" //The ONLY version line you need to change
   dockerfile_template_data = <<-EOT
         FROM {{{ imagebuilder:parentImage }}}
         {{{ imagebuilder:environments }}}
