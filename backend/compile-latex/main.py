@@ -1,29 +1,31 @@
-import os, subprocess, base64
+import os, subprocess
+
 def main(event, context):
     os.chdir("/tmp")
     os.system("rm -rf *")
 
-    filename=event["filename"]
-    with open(filename, "w+") as f:
-        f.write(event["content"])
+    params=event.get("queryStringParameters", event)
 
-    process=subprocess.run(["pdflatex", "-interaction=nonstopmode", filename+".tex"], capture_output=True)
+    return [event, params]
+    filename=params["filename"]
+    with open(filename+".tex", "w+") as f:
+        f.write(params["content"])
+
+    process=subprocess.run(["pdflatex", "-interaction=nonstopmode", filename+".tex"], capture_output=True, text=True)
 
     status_code=200
     headers={}
     body=b""
     if process.returncode>0:
         status_code=500
-        headers["Error-Message"]=process.stderr.decode()
+        headers["Error-Message"]=process.stdout
     else:
        body=open(filename+".pdf", "rb").read()
-
-    body=base64.b64encode(body).decode('utf-8')
 
     return {
     "headers": headers,
     "statusCode": status_code, 
     "body": body,
-    'isBase64Encoded': True
+    'isBase64Encoded': False
     }
-        
+

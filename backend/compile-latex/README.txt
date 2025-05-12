@@ -5,7 +5,9 @@ To use:
 	* Put your AWS credentials in the .env file (see Terraform docs for the proper format)
 	* Run `terraform init` to set up the proper state
 
-	* Now, run `pdm run python deploy.py`
+	* Now, run `pdm run deploy.py`
+
+When modifying main.py, remember to update the version numbers for both the recipe and the component
 
 
 
