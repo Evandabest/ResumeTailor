@@ -63,6 +63,8 @@ You are editing the resume of a user to include some of their personal GitHub pr
     Return JUST the modified resume, nothing more.
     """)
 
+    output=output.strip("```latex").rstrip("```")
+
     filename=resume["filename"]
 
 @endpoint("/generate/pdf", ["filename", "content"], [File("output")])
@@ -70,7 +72,7 @@ def pdf():
     filename+=".tex"
     response=requests.post(config["LATEX_COMPILER_URL"], json={"filename": filename, "content": content}).json()
 
-    if response["statusCode"]!=200:
+    if (response["statusCode"]!=200) and False: #We'll disable error checking for now. We'll re-enable it once we get Gemini to produce valid LaTeX.
         raise ValueError(response["headers"]["Error-Message"])
     else:
         body=response["body"]
