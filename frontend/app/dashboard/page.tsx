@@ -350,9 +350,11 @@ export default function DashboardPage() {
           <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
           <p className="text-gray-600 mt-1">Welcome back! Here's an overview of your resume tailoring progress.</p>
         </div>
-        <Button className="mt-4 md:mt-0 bg-blue-700 hover:bg-blue-800">
-          <FaPlus className="mr-2" /> New Resume
-        </Button>
+        <Link href="/resumes/new">
+          <Button className="mt-4 md:mt-0 bg-blue-700 hover:bg-blue-800">
+            <FaPlus className="mr-2" /> Create New Resume
+          </Button>
+        </Link>
       </div>
 
       <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="space-y-6">

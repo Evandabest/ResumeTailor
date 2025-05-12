@@ -44,5 +44,3 @@ def rename():
 
     validate_id(id)
     table.update({"filename": Path(name).stem}).eq("id", id).execute()
-    
-    

@@ -1,18 +1,27 @@
-FROM texlive/texlive:latest
+FROM ubuntu:22.04
 
-WORKDIR /app
+# Avoid prompts from apt
+ENV DEBIAN_FRONTEND=noninteractive
 
-# Install Python and pip
+# Install TeX Live and Python
 RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
+    texlive-latex-base \
+    texlive-latex-recommended \
+    texlive-latex-extra \
+    texlive-fonts-extra \
+    texlive-font-utils \
     && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /latex-compiler
 
 # Copy the Python server script
 COPY latex-compiler.py .
 
-# Create tmp directory
-RUN mkdir -p /app/tmp
+# Create tmp directory with proper permissions
+RUN mkdir -p /latex-compiler/tmp && \
+    chmod 777 /latex-compiler/tmp
 
 EXPOSE 3001
 
