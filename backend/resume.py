@@ -14,12 +14,12 @@ def validate_id(id): #Checks whether the resume referenced by the id has permiss
 
 @endpoint("/resume/upload", [File("file"), "update"])
 def upload():
-    filename= Path(file.filename).stem
+    filename= Path(file.filename)
 
     if not filename.name.endswith(".tex"):
         raise ValueError("Only .tex files can be uploaded")
 
-    data={"uid": get_uid_from_token(token), "content": file.read().decode(), "filename": filename}
+    data={"uid": get_uid_from_token(token), "content": file.read().decode(), "filename": filename.stem}
 
     if update is None:
         action=table.insert(data)
@@ -35,7 +35,7 @@ def delete():
 
 @endpoint("/resume/list", [], ["info"])
 def list():
-    data=table.select("id, filename").execute().data
+    info=table.select("id, filename").execute().data
 
 @endpoint("/resume/rename", ["id", "name"])
 def rename():
