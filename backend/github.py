@@ -95,6 +95,7 @@ def _import():
 
     embeddings=get_embeddings(token, [x["text"] for x in data])
 
+    data=[{"uid": uid, "embedding": embeddings[i].values} | x for i, x in enumerate(data)] #Merge them back together
     data=[{"uid": uid, "embedding": embeddings[i]} | x for i, x in enumerate(data)] #Merge them back together
 
     """
@@ -102,20 +103,24 @@ def _import():
     """
 
     User.table("user_to_project").delete().eq("uid", uid).execute() #Clear all projects associated with the user
+    User.table("user_to_project").delete().eq("uid", uid).execute() #Clear all projects associated with the user
 
     User.table("user_to_project").insert(data).execute()
 
 @endpoint("/github/projects/view", [], ["repos"])
 def view_projects():
+    repos=User.table("user_to_project").select("name, url").eq("uid", get_id_from_token(token)).execute().data
     repos=User.table("user_to_project").select("name, url").eq("uid", get_uid_from_token(token)).execute().data
 
 #/github/selection --- stores JSON mapping between name of project and whether it was selected on the frontend during project import. /get can be used to retrieve it, and /set can be used to, well, set it.
 @endpoint("/github/selection/set", ["data"])
 def _set():
+    User.table("user_to_selection").upsert({"uid": get_id_from_token(token), "data": data}).execute()
     User.table("user_to_selection").upsert({"uid": get_uid_from_token(token), "data": data}).execute()
 
 @endpoint("/github/selection/get", [], ["data"])
 def _get():
+    data=User.table("user_to_selection").select("data").eq("uid", get_id_from_token(token)).execute().data
     data=User.table("user_to_selection").select("data").eq("uid", get_uid_from_token(token)).execute().data
 
     if len(data)==0:

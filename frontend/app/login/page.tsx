@@ -4,6 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { FaGithub } from "react-icons/fa"
+import { useAuth } from "@/lib/auth-context"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,8 +12,10 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 
 export default function LoginPage() {
-  const router = useRouter()
+  const router = useRouter();
+  const { login } = useAuth()  
   const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [error, setError] = useState<string>("")
   
   // Login form state
   const [loginEmail, setLoginEmail] = useState("")
@@ -29,16 +32,34 @@ export default function LoginPage() {
     setIsLoading(true)
     
     try {
-      // Replace with your actual login logic
-      console.log("Login with:", { loginEmail, loginPassword })
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // Redirect to dashboard on success
+      const response = await fetch('/api/auth', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'login',
+          email: loginEmail,
+          password: loginPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || 'Login failed');
+        return;
+      }
+
+      const userData = {
+        name: loginEmail.split('@')[0], // Default name from email
+        email: loginEmail
+      };
+      login(userData, data.token);
       router.push("/dashboard")
     } catch (error) {
-      console.error("Login failed:", error)
+      console.error("Login failed:", error);
+      setError('Failed to connect to authentication service');
     } finally {
       setIsLoading(false)
     }
@@ -49,39 +70,43 @@ export default function LoginPage() {
     setIsLoading(true)
     
     try {
-      // Replace with your actual signup logic
-      console.log("Signup with:", { signupName, signupEmail, signupPassword })
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // Redirect to dashboard on success
+      if (signupPassword !== signupConfirmPassword) {
+        throw new Error("Passwords do not match");
+      }
+
+      const response = await fetch('/api/auth', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'signup',
+          email: signupEmail,
+          password: signupPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || 'Signup failed');
+        return;
+      }
+
+      const userData = {
+        name: signupName,
+        email: signupEmail
+      };
+      login(userData, data.token);
       router.push("/dashboard")
     } catch (error) {
-      console.error("Signup failed:", error)
+      console.error("Signup failed:", error);
+      setError('Failed to connect to authentication service');
     } finally {
       setIsLoading(false)
     }
   }
   
-  async function handleGithubLogin() {
-    setIsLoading(true)
-    
-    try {
-      // Replace with your actual GitHub OAuth logic
-      console.log("Login with GitHub")
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // Redirect to dashboard on success
-      router.push("/dashboard")
-    } catch (error) {
-      console.error("GitHub login failed:", error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -105,6 +130,11 @@ export default function LoginPage() {
             </TabsList>
             
             <TabsContent value="login">
+              {error && (
+                <div className="mb-4 p-4 text-sm text-red-800 bg-red-100 rounded-lg">
+                  {error}
+                </div>
+              )}
               <form onSubmit={handleLogin} className="space-y-6">
                 <div className="space-y-2">
                   <Label htmlFor="login-email">Email</Label>
@@ -141,28 +171,34 @@ export default function LoginPage() {
                 >
                   {isLoading ? "Logging in..." : "Log In"}
                 </Button>
-                
-                <div className="relative my-6">
+
+                {/* <div className="relative my-6">
                   <Separator className="absolute inset-0 m-auto" />
                   <div className="relative flex justify-center text-xs uppercase">
                     <span className="bg-white px-2 text-gray-500">Or continue with</span>
                   </div>
-                </div>
-                
-                <Button 
-                  type="button" 
+                </div> */}
+
+                {/* <Button
+                  type="button"
                   variant="outline"
                   className="w-full"
-                  onClick={handleGithubLogin}
+                  onClick={async () => {}}
                   disabled={isLoading}
                 >
                   <FaGithub className="mr-2 h-4 w-4" />
                   GitHub
-                </Button>
+                </Button> */}
+
               </form>
             </TabsContent>
             
             <TabsContent value="signup">
+              {error && (
+                <div className="mb-4 p-4 text-sm text-red-800 bg-red-100 rounded-lg">
+                  {error}
+                </div>
+              )}
               <form onSubmit={handleSignup} className="space-y-6">
                 <div className="space-y-2">
                   <Label htmlFor="signup-name">Full Name</Label>
@@ -217,24 +253,39 @@ export default function LoginPage() {
                 >
                   {isLoading ? "Creating account..." : "Create Account"}
                 </Button>
-                
-                <div className="relative my-6">
+
+                {/* <div className="relative my-6">
                   <Separator className="absolute inset-0 m-auto" />
                   <div className="relative flex justify-center text-xs uppercase">
                     <span className="bg-white px-2 text-gray-500">Or continue with</span>
                   </div>
-                </div>
-                
-                <Button 
-                  type="button" 
+                </div> */}
+
+                {/* <Button
+                  type="button"
                   variant="outline"
                   className="w-full"
-                  onClick={handleGithubLogin}
+                  // onClick={async () => {
+                  //   setIsLoading(true);
+                  //   try {
+                  //     const githubData = await linkGitHubAccount();
+                  //     login({
+                  //       name: 'GitHub User',
+                  //       email: 'github@user.com'
+                  //     });
+                  //     router.push('/dashboard');
+                  //   } catch (error) {
+                  //     setError(error instanceof Error ? error.message : 'GitHub authentication failed');
+                  //   } finally {
+                  //     setIsLoading(false);
+                  //   }
+                  // }}
                   disabled={isLoading}
                 >
                   <FaGithub className="mr-2 h-4 w-4" />
                   GitHub
-                </Button>
+                </Button> */}
+
               </form>
             </TabsContent>
           </Tabs>
