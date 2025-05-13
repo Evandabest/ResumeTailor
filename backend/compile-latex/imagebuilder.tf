@@ -55,14 +55,14 @@ resource "aws_imagebuilder_component" "HelloWorld" {
 
 resource "aws_imagebuilder_container_recipe" "compile-latex" {
   container_type           = "DOCKER"
-  version                  = "0.0.2" //The ONLY version line you need to change
+  version                  = "0.0.1" //The ONLY version line you need to change
   dockerfile_template_data = <<-EOT
         FROM {{{ imagebuilder:parentImage }}}
         {{{ imagebuilder:environments }}}
         RUN echo "Building..."
 
 	RUN apt update
-	RUN apt install -y --no-install-suggests texlive-latex-extra python3.11 python3-pip curl
+	RUN apt install -y --no-install-suggests texlive-latex-extra texlive-fonts-recommended python3.11 python3-pip curl
 	RUN pip3 install --break-system-packages awslambdaric
 
 	RUN printf ${var.lambda_handler} > /main.py
