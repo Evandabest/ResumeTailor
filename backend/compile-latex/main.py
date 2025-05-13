@@ -22,8 +22,10 @@ def main(event, context):
     if process.returncode>0:
         status_code=500
         headers["Error-Message"]=process.stdout
-    else:
-       body=open(filename+".pdf", "rb").read()
+
+    filename+=".pdf"
+    if os.path.exists(filename):
+        body=open(filename, "rb").read()
 
     return json.dumps({
     "headers": headers,
