@@ -101,8 +101,6 @@ def endpoint(endpoint, parameters, outputs=None):
 
             parameters_.append("token")
 
-            special_params={k: k.__class__ for k in parameters_ if not isinstance(k, str)}
-
             parameters_map={} #Mapping parameters to their values 
             
             if request.is_json:
@@ -162,19 +160,21 @@ def endpoint(endpoint, parameters, outputs=None):
             file_outputs={}
 
             for k in outputs_:
+                cls=k.__class__
+                k=str(k)
+
                 if k not in persistent_locals.locals:
                     continue
                 val=persistent_locals.locals[k]
-                cls=k.__class__
-                k=str(k)
+
                 if cls==File:
                     file_outputs[k]=(val.name, val.read())
                 elif cls==str:
                     json_outputs[k]=val
             if len(file_outputs)>0:
-                m=MultipartEncoder(fields={"json": json.dumps(json_parts)}|file_outputs)
-
-                return Response(m.to_string(), mimetype=m.content_type, status=status_code)
+                m=MultipartEncoder(fields={"json": json.dumps(json_outputs)}|file_outputs)
+                
+                return Response(m.to_string(), content_type=m.content_type, status=status_code)
             else:
                 return json_outputs, status_code
         

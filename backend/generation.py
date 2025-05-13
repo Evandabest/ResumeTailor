@@ -67,20 +67,19 @@ You are editing the resume of a user to include some of their personal GitHub pr
 
     filename=resume["filename"]
 
-@endpoint("/generate/pdf", ["filename", "content"], [File("output")])
+@endpoint("/generate/pdf", ["filename", "content"], [File("file")])
 def pdf():
-    filename+=".tex"
-    response=requests.post(config["LATEX_COMPILER_URL"], json={"filename": filename, "content": content}).json()
+    response=requests.post(config["LATEX_COMPILER_URL"], json={"filename": filename+".tex", "content": content}).json()
 
-    if (response["statusCode"]!=200) and False: #We'll disable error checking for now. We'll re-enable it once we get Gemini to produce valid LaTeX.
+    if (response["statusCode"]!=200) and (not app.testing): #We'll disable error checking for now. We'll re-enable it once we get Gemini to produce valid LaTeX.
         raise ValueError(response["headers"]["Error-Message"])
     else:
         body=response["body"]
         if response["isBase64Encoded"]:
             body=base64.b64decode(body)
 
-        output=io.BytesIO(body)
-        output.name=filename
+        file=io.BytesIO(body)
+        file.name=filename+".pdf"
 
 
 
