@@ -84,7 +84,7 @@ def decode_form(response):
             content_type, options = parse_options_header(response.content_type)
 
             if content_type=="multipart/form-data":
-                for part in MultipartParser(io.BytesIO(response.get_data()), options["boundary"], spool_limit=10e6, memory_limit=20e6):
+                for part in MultipartParser(io.BytesIO(response.get_data()), options["boundary"]):
                     if part.filename:
                         part.file.name=part.filename
                         self.files[part.name]=part.file

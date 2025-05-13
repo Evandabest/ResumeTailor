@@ -1,5 +1,5 @@
 from . import *
-import json, os
+import json, os, pathlib
 
 token=None
 credentials=None
@@ -124,14 +124,11 @@ def test_pdf_valid(client):
     
     response=client.post("/generate/pdf", json=credentials|{"filename": filename, "content": latex})
 
-    is_success(response)
-    f=response.files["file"]
+    f=is_success(response).files["file"]
 
-    assert f.name==filename
+    assert pathlib.Path(f.name).stem==filename
 
-    f.seek(0, os.SEEK_END)
-
-    assert f.tell()>0
+    assert f.seek(0, os.SEEK_END)>0
 
 
 
