@@ -4,8 +4,8 @@ import json, os, pathlib
 token=None
 credentials=None
 
-username="evanhaque1@gmail.com"
-password="test123"
+username=config["TEST_USER2_EMAIL"]
+password=config["TEST_USER2_PASSWORD"]
 
 resume_filename="test_resume"
 
