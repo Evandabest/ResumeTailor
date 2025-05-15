@@ -1,0 +1,59 @@
+name: "Terraform Infrastructure"
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'terraform/**'
+  pull_request:
+    paths:
+      - 'terraform/**'
+
+env:
+  TF_LOG: INFO
+  AWS_ACCESS_KEY_ID: ${{ secrets.TERRAFORM_AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.TERRAFORM_AWS_SECRET_ACCESS_KEY }}
+
+jobs:
+  terraform:
+    name: "Terraform"
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./terraform
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Create tfvars file
+        run: |
+          cat > terraform.tfvars << EOF
+          supabase_url         = "${{ secrets.SUPABASE_URL }}"
+          supabase_user_key    = "${{ secrets.SUPABASE_USER_KEY }}"
+          supabase_admin_key   = "${{ secrets.SUPABASE_ADMIN_KEY }}"
+          supabase_jwt_secret  = "${{ secrets.SUPABASE_JWT_SECRET }}"
+          supabase_psql_user   = "${{ secrets.SUPABASE_PSQL_USER }}"
+          supabase_psql_password = "${{ secrets.SUPABASE_PSQL_PASSWORD }}"
+          supabase_psql_host   = "${{ secrets.SUPABASE_PSQL_HOST }}"
+          supabase_psql_port   = "${{ secrets.SUPABASE_PSQL_PORT }}"
+          supabase_psql_dbname = "${{ secrets.SUPABASE_PSQL_DBNAME }}"
+          supabase_anon_key    = "${{ secrets.SUPABASE_ANON_KEY }}"
+          EOF
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        run: terraform plan -input=false
+        
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform apply -auto-approve -input=false
