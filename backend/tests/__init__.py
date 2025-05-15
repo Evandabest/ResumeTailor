@@ -2,7 +2,8 @@
 This acts as the "utils.py" for test.py, as I don't want to clutter up the "tests" directory with a non-test "utils.py"
 """
 
-import sys, functools, ast, collections, inspect, pathlib
+import io, json, sys, functools, ast, collections, inspect, pathlib
+from multipart import parse_options_header, MultipartParser
 import pytest
 
 from ..app import *
@@ -75,6 +76,26 @@ def client(request):
         if teardown is not None:
             teardown(client)
 
+def decode_form(response):
+    class DecodedForm(dict):
+        def __init__(self, response):
+            super().__init__()
+            self.files={}
+            content_type, options = parse_options_header(response.content_type)
+
+            if content_type=="multipart/form-data":
+                for part in MultipartParser(io.BytesIO(response.get_data()), options["boundary"], spool_limit=10e6, memory_limit=20e6):
+                    if part.filename:
+                        part.file.name=part.filename
+                        self.files[part.name]=part.file
+                    elif part.name=="json":
+                        super().update(json.loads(part.value))
+            else:
+                if response.json is not None:
+                    super().update(response.json)
+    
+    return DecodedForm(response)
+
 def is_error(response, error_code=500):
     
     assert (response.status_code == error_code)
@@ -82,13 +103,13 @@ def is_error(response, error_code=500):
     if error_code!=500:
         return
     
-    response=response.json
+    form=decode_form(response)
     
-    #We don't check that the error is from gotrue, as we may want to add our own custom errors later
-    assert response is not None
+    assert form
 
+        #We don't check that the error is from gotrue, as we may want to add our own custom errors later
     for key in ["error", "message"]:
-        assert response.get(key, "") != ""
+        assert form.get(key, "") != ""
         pass
 
 
@@ -96,12 +117,12 @@ def is_success(response):  #Similar to Rust's unwrap
 
     assert response.status_code == 200
 
-    response=response.json
+    form=decode_form(response)
 
-    assert response is not None
+    assert form
 
     for key in ["error", "message"]:
-        assert response.get(key, "") == ""
+        assert form.get(key, "") == ""
 
-    return response
+    return form
 

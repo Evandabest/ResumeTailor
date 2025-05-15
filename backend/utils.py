@@ -1,7 +1,11 @@
 from supabase import *
-from flask import Flask, request, url_for
+from flask import Flask, request, url_for, Response
 import pathlib, sys, types, traceback, functools, json
 import dotenv, jwt, requests, sqlalchemy as sql
+from requests_toolbelt import MultipartEncoder
+
+import google
+from google.genai.types import EmbedContentConfig
 
 #Move the backend/... directories to the end of sys.path to deal with path conflicts (Python should really just make relative import based purely on location, not on sys.path)
 backend_directory=pathlib.Path(__file__).parent
@@ -82,9 +86,9 @@ class PersistentLocals(object):
 
 def endpoint(endpoint, parameters, outputs=None):
     """
-    Injects the keys specified in `arguments` from the request JSON as local variables in the decorated function. The inclusion of `token` is implied.
+    Injects the keys specified in `parameters` from the request JSON as local variables in the decorated function. The inclusion of `token` is implied.
 
-    Returns all of the locals whose names was specified by `results` in a single response JSON. The inclusion of both `error` and `message` are implied.
+    Returns all of the locals whose names was specified by `outputs` in a single response JSON. The inclusion of both `error` and `message` are implied.
 
     This forces better self-documentation by not allowing the caller to use or return variables without specifying them ahead of time
     """
@@ -97,9 +101,7 @@ def endpoint(endpoint, parameters, outputs=None):
 
             parameters_.append("token")
 
-            special_params={k: k.__class__ for k in parameters_ if not isinstance(k, str)}
-
-            parameters_map={}
+            parameters_map={} #Mapping parameters to their values 
             
             if request.is_json:
                 json_=request.json.copy()
@@ -153,8 +155,28 @@ def endpoint(endpoint, parameters, outputs=None):
             for key in ["error", "message"]:
                 if key not in persistent_locals.locals:
                     persistent_locals.locals[key]=""
+            
+            json_outputs={}
+            file_outputs={}
 
-            return {k: persistent_locals.locals[k] for k in outputs_ if k in persistent_locals.locals}, status_code
+            for k in outputs_:
+                cls=k.__class__
+                k=str(k)
+
+                if k not in persistent_locals.locals:
+                    continue
+                val=persistent_locals.locals[k]
+
+                if cls==File:
+                    file_outputs[k]=(val.name, val.read())
+                elif cls==str:
+                    json_outputs[k]=val
+            if len(file_outputs)>0:
+                m=MultipartEncoder(fields={"json": json.dumps(json_outputs)}|file_outputs)
+                
+                return Response(m.to_string(), content_type=m.content_type, status=status_code)
+            else:
+                return json_outputs, status_code
         
         wrapper.__name__=(f.__module__+"."+f.__name__).replace(".", "_")
         wrapper=app.route(endpoint, methods=["POST"])(wrapper)
@@ -162,5 +184,40 @@ def endpoint(endpoint, parameters, outputs=None):
         return wrapper
     return decorator
 
-def get_id_from_token(token):
+def get_uid_from_token(token):
     return User.auth.get_user(token).user.id
+
+user_to_token_table=User.table("user_to_token")
+
+def retrieve(token, column):
+    lst=user_to_token_table.select(column).eq("uid", get_uid_from_token(token)).execute().data
+    if len(lst)==0:
+        return None
+    else:
+        return lst[0][column]
+        
+def get_gemini_client(token):
+    _token=retrieve(token, "gemini")
+    if not _token:
+        _token=config["TEST_USER_GEMINI_TOKEN"]
+
+    return google.genai.Client(api_key=_token)
+
+def get_embeddings(token, data):
+    embeddings=get_gemini_client(token).models.embed_content(
+        model="text-embedding-004",
+        contents=data, 
+        config=EmbedContentConfig(task_type="SEMANTIC_SIMILARITY")
+    ).embeddings
+
+    return [x.values for x in embeddings]
+
+def llm(token, content):
+    content=content.strip()
+    
+    return get_gemini_client(token).models.generate_content(
+        model="models/gemini-2.5-flash-preview-04-17",
+        contents=content
+        ).text
+
+
