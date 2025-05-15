@@ -55,7 +55,7 @@ export default function LoginPage() {
         name: loginEmail.split('@')[0], // Default name from email
         email: loginEmail
       };
-      login(userData);
+      login(userData, data.token);
       router.push("/dashboard")
     } catch (error) {
       console.error("Login failed:", error);
@@ -97,7 +97,7 @@ export default function LoginPage() {
         name: signupName,
         email: signupEmail
       };
-      login(userData);
+      login(userData, data.token);
       router.push("/dashboard")
     } catch (error) {
       console.error("Signup failed:", error);
@@ -106,6 +106,7 @@ export default function LoginPage() {
       setIsLoading(false)
     }
   }
+  
   
 
   return (
@@ -172,14 +173,14 @@ export default function LoginPage() {
                   {isLoading ? "Logging in..." : "Log In"}
                 </Button>
 
-                <div className="relative my-6">
+                {/* <div className="relative my-6">
                   <Separator className="absolute inset-0 m-auto" />
                   <div className="relative flex justify-center text-xs uppercase">
                     <span className="bg-white px-2 text-gray-500">Or continue with</span>
                   </div>
-                </div>
+                </div> */}
 
-                <Button
+                {/* <Button
                   type="button"
                   variant="outline"
                   className="w-full"
@@ -188,7 +189,7 @@ export default function LoginPage() {
                 >
                   <FaGithub className="mr-2 h-4 w-4" />
                   GitHub
-                </Button>
+                </Button> */}
 
               </form>
             </TabsContent>
@@ -254,14 +255,14 @@ export default function LoginPage() {
                   {isLoading ? "Creating account..." : "Create Account"}
                 </Button>
 
-                <div className="relative my-6">
+                {/* <div className="relative my-6">
                   <Separator className="absolute inset-0 m-auto" />
                   <div className="relative flex justify-center text-xs uppercase">
                     <span className="bg-white px-2 text-gray-500">Or continue with</span>
                   </div>
-                </div>
+                </div> */}
 
-                <Button
+                {/* <Button
                   type="button"
                   variant="outline"
                   className="w-full"
@@ -284,7 +285,7 @@ export default function LoginPage() {
                 >
                   <FaGithub className="mr-2 h-4 w-4" />
                   GitHub
-                </Button>
+                </Button> */}
 
               </form>
             </TabsContent>

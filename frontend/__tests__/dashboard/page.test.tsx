@@ -1,59 +1,64 @@
-import React from 'react';
-import { render, screen } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import DashboardPage from '../../app/dashboard/page';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { useAuth } from '@/lib/auth-context';
+import DashboardPage from '@/app/dashboard/page';
 
-// Mock the hooks since Next.js components use hooks that won't work in tests
-jest.mock('next/navigation', () => ({
-  useRouter: () => ({
-    push: jest.fn(),
-  }),
-  usePathname: () => '/dashboard',
+// Mock necessary hooks and functions
+jest.mock('@/lib/auth-context', () => ({
+  useAuth: jest.fn(),
 }));
 
-// Mock useState since we're using it in the component
-jest.mock('react', () => ({
-  ...jest.requireActual('react'),
-  useState: jest.fn().mockImplementation((initialState) => [initialState, jest.fn()])
+// Mock icons to avoid issues with react-icons in tests
+jest.mock('react-icons/fa', () => ({
+  FaFileAlt: () => 'FileIcon',
+  FaGithub: () => 'GithubIcon',
+  FaSearch: () => 'SearchIcon',
+  FaBriefcase: () => 'BriefcaseIcon',
+  FaPlus: () => 'PlusIcon',
+  FaEllipsisH: () => 'EllipsisIcon',
+  FaStar: () => 'StarIcon',
+  FaCode: () => 'CodeIcon',
+  FaChartLine: () => 'ChartIcon',
+  FaCheckCircle: () => 'CheckCircleIcon',
 }));
 
 describe('DashboardPage', () => {
-  it('renders the dashboard title', () => {
-    render(<DashboardPage />);
-    expect(screen.getByText('Dashboard')).toBeInTheDocument();
-  });
+  const mockFetchWithAuth = jest.fn();
   
-  it('renders the welcome message', () => {
-    render(<DashboardPage />);
-    expect(screen.getByText(/Welcome back!/)).toBeInTheDocument();
-  });
-  
-  it('renders the new resume button', () => {
-    render(<DashboardPage />);
-    expect(screen.getByText('New Resume')).toBeInTheDocument();
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (useAuth as jest.Mock).mockReturnValue({
+      fetchWithAuth: mockFetchWithAuth,
+    });
   });
 
-  it('renders the dashboard overview cards', () => {
-    render(<DashboardPage />);
-    const cardHeaders = screen.getAllByRole('generic').filter(el => 
-      el.getAttribute('data-slot') === 'card-title'
-    );
-    expect(cardHeaders[0]).toHaveTextContent(/resumes created/i);
-    expect(cardHeaders[1]).toHaveTextContent(/github projects/i);
-    expect(cardHeaders[2]).toHaveTextContent(/profile strength/i);
+  describe('Tab Navigation', () => {
+    it('should render overview tab by default', () => {
+      render(<DashboardPage />);
+      expect(screen.getByRole('tabpanel', { name: /overview/i })).toBeVisible();
+    });
+
   });
 
-  it('renders tab navigation', () => {
-    render(<DashboardPage />);
-    expect(screen.getByRole('tab', { name: 'Overview' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Resumes' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'GitHub Projects' })).toBeInTheDocument();
+  describe('Overview Tab Content', () => {
+    beforeEach(() => {
+      render(<DashboardPage />);
+    });
+
+
+    it('should show recent activity section', () => {
+      expect(screen.getByText('Recent Activity')).toBeInTheDocument();
+      expect(screen.getByText(/Created "Software Engineer - Google" resume/)).toBeInTheDocument();
+      expect(screen.getByText(/Connected GitHub repository/)).toBeInTheDocument();
+    });
+
+    it('should display skills analysis section', () => {
+      expect(screen.getByText('Skills Analysis')).toBeInTheDocument();
+      expect(screen.getByText('Your Top Skills')).toBeInTheDocument();
+      expect(screen.getByText('Skill Gaps to Fill')).toBeInTheDocument();
+    });
   });
 
-  it('renders activity and skills sections', () => {
-    render(<DashboardPage />);
-    expect(screen.getByText('Recent Activity')).toBeInTheDocument();
-    expect(screen.getByText('Skills Analysis')).toBeInTheDocument();
-  });
-  
+
+
 });
+

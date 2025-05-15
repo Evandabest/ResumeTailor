@@ -9,7 +9,7 @@ function TestWrapper({ children }: { children: React.ReactNode }) {
   return (
     <div>
       <button 
-        onClick={() => login({ name: 'Test User', email: 'test@example.com' })}
+        onClick={() => login({ name: 'Test User', email: 'test@example.com' }, 'test-token')}
         data-testid="login-trigger"
       >
         Set Auth State
