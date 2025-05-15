@@ -1,60 +1,108 @@
+# GitHub Actions Workflow Guide
+# ----------------------------
+# This file defines an automated CI pipeline that runs tests when code changes are pushed.
+# To create your own workflow:
+# 1. Place .yml files in .github/workflows directory
+# 2. Choose a descriptive name for your workflow
+# 3. Define triggers using 'on:' section
+# 4. Configure one or more jobs with their steps
+
 name: Test
+
+# Triggers - Define when this workflow runs
+# '**' matches any branch name, so this runs on all pushes and PRs
+# You can specify exact branches like: - main, - develop
 on:
   push:
-    branches: ['**']
+    branches: ['**']  # Runs on any push to any branch
   pull_request:
-    branches: ['**']
+    branches: ['**']  # Runs on PRs targeting any branch
 
+# Jobs - Groups of steps that execute on the same runner
+# Each job runs in parallel by default unless dependencies are specified
 jobs:
+  # Job ID - can be any unique name
+  # This job runs all our test suites (unit, integration, and E2E)
   tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest  # Specifies the runner environment (can also use windows-latest, macos-latest)
+    
+    # Set default working directory for all 'run' steps in this job
+    # Useful when your project has multiple packages/directories
     defaults:
       run:
         working-directory: frontend
+    
+    # Steps - Sequential tasks that make up the job
+    # Each step can:
+    # - Run commands (using 'run:')
+    # - Use actions (using 'uses:')
+    # - Set environment variables
+    # - Handle artifacts
     steps:
+      # Step 1: Checkout the repository
+      # This step is required in most workflows to access your code
+      # The checkout action handles cloning your repo and setting up the workspace
       - name: Check out repository code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4  # Official GitHub action, v4 is the version
       
+      # Step 2: Set up Node.js environment
+      # This action sets up Node.js and npm
+      # The 'with:' section provides configuration options
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
+          node-version: '20'  # Specify Node.js version
+          cache: 'npm'        # Enable npm dependency caching for faster installations
+          cache-dependency-path: frontend/package-lock.json  # Path to lockfile for cache key
       
-      # Combined install step
+      # Step 3: Install dependencies
+      # Using '|' allows multiple commands in one step
+      # The 'run' keyword executes shell commands
       - name: Install dependencies and setup
         run: |
-          npm ci --legacy-peer-deps
-          npx playwright install --with-deps chromium
+          npm ci --legacy-peer-deps  # Clean install of dependencies
+          npx playwright install --with-deps chromium  # Install Playwright browser for E2E tests
       
-      # Run all Jest tests
+      # Step 4: Run unit and integration tests
+      # Using Jest for both types of tests
+      # '--coverage' generates test coverage reports
+      # '--passWithNoTests' prevents failure if no tests exist
       - name: Run unit and integration tests
         run: |
           npm run test -- --passWithNoTests --coverage
           npm run test:integration -- --passWithNoTests --coverage
       
+      # Step 5: Save test coverage reports as artifacts
+      # Artifacts persist after the workflow ends and can be downloaded
+      # Useful for storing test reports, build outputs, etc.
       - name: Upload test coverage
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-reports
-          path: frontend/coverage
+          name: coverage-reports  # Name for the artifact
+          path: frontend/coverage # Path to the files to upload
       
-      # Build and start for E2E tests
+      # Step 6: Prepare for E2E tests
+      # Build the app and start the development server
+      # The '&' runs the server in the background
       - name: Build and start app
         run: |
           npm run build
           npm run dev & # Use dev server for better DX and reuse config
-          # Wait for app to be ready
+          # Wait for app to be ready - important for E2E tests
           npx wait-on tcp:3000 -t 30000
       
-      # Run E2E tests
+      # Step 7: Run E2E tests
+      # Using Playwright for end-to-end testing
+      # Set environment variables using 'env:'
       - name: Run E2E tests
         run: npx playwright test
         env:
-          CI: true
-          PLAYWRIGHT_HTML_REPORT: playwright-report
+          CI: true  # Indicates we're in CI environment
+          PLAYWRIGHT_HTML_REPORT: playwright-report  # Configure report output
       
+      # Step 8: Save Playwright report as artifact
+      # 'if: always()' ensures this runs even if previous steps fail
+      # This helps debug test failures by preserving the report
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
         if: always()
