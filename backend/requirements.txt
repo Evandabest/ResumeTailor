@@ -1,0 +1,15 @@
+flask>=3.1.0
+python-dotenv>=0.9.9
+pytest>=8.3.5
+pyjwt>=2.10.1
+requests>=2.32.3
+sqlalchemy>=2.0.39
+psycopg2-binary>=2.9.10
+pytest-cov>=6.0.0
+PyGithub>=2.6.1
+google-genai>=1.10.0 
+certifi==2025.1.31
+meson==1.7.0
+packaging==24.2
+setuptools==76.0.0
+supabase>=2.3.4
