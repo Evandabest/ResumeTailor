@@ -2,6 +2,7 @@ from supabase import *
 from flask import Flask, request, url_for
 import pathlib, sys, types, traceback, functools, json
 import dotenv, jwt, requests, sqlalchemy as sql
+import os
 
 #Move the backend/... directories to the end of sys.path to deal with path conflicts (Python should really just make relative import based purely on location, not on sys.path)
 backend_directory=pathlib.Path(__file__).parent

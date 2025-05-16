@@ -1,5 +1,5 @@
-from .utils import *
-
+from utils import *
+import os
 from github import Github, Auth
 from github.GithubException import UnknownObjectException
 from github.NamedUser import NamedUser
